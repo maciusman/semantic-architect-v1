@@ -57,7 +57,6 @@ export class ApiService {
           model,
           messages,
           temperature,
-          max_tokens: 4000,
         }),
       });
 
