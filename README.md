@@ -118,7 +118,53 @@ Po zakończeniu analizy aplikacja pozwala na eksport czterech kluczowych plików
 
 ---
 
-### 7. Rozwiązywanie Problemów i Dobre Praktyki
+### 7.Zaawansowane Sterowanie Analizą: Rola i Optymalizacja `Query Expansion`
+
+Jednym z głównych mechanizmów w **Semantic Architect V-Lite**, jest etap **Query Expansion**. To nie jest prosty generator słów kluczowych – to inteligentny proces, który nadaje kierunek i zakres całej dalszej analizie. Zrozumienie, jak on działa i jak nim sterować, jest kluczem do uzyskania precyzyjnych i strategicznie wartościowych wyników.
+
+#### Jak Działa Query Expansion?
+
+Gdy podajesz **"Centralną Encję"** (np. `Endodoncja`), aplikacja nie analizuje wyników wyszukiwania tylko dla tego jednego hasła. Byłoby to zbyt wąskie i nie oddałoby złożoności tematu. Zamiast tego, uruchamiany jest proces Query Expansion, który:
+
+1.  **Wysyła zapytanie do zaawansowanego modelu AI**, instruując go, aby wcielił się w rolę eksperta SEO i stratega contentu.
+2.  Model, bazując na **Centralnej Encji** oraz, co najważniejsze, na Twoim **Kontekście Biznesowym**, generuje listę **zróżnicowanych i trafnych zapytań**.
+3.  Proces ten uwzględnia:
+    *   **Różne perspektywy** i aspekty tematu.
+    *   **Wariacje intencji użytkownika** (pytania informacyjne, komercyjne, porównawcze).
+    *   **Powiązane podtematy** i kategorie.
+    *   **Szczegółowe zapytania** typu "długi ogon".
+
+W ten sposób, zamiast analizować jeden punkt, aplikacja tworzy siatkę punktów startowych, która pozwala na zbudowanie znacznie bogatszego i bardziej reprezentatywnego obrazu "konsensusu Google".
+
+#### Czy Ten Proces Jest Losowy?
+
+**Nie. Jest to kontrolowany proces kreatywny, a Ty jesteś jego reżyserem.** "Losowość" w tym kontekście to kreatywność modelu językowego, którą precyzyjnie sterujesz za pomocą danych wejściowych w panelu konfiguracji.
+
+#### Jak Mieć Wpływ na Wyniki Query Expansion?
+
+Masz do dyspozycji trzy potężne "dźwignie", które pozwalają precyzyjnie kształtować wyniki tego etapu:
+
+**1. Precyzja `Centralnej Encji / Tematu`**
+To Twoje główne narzędzie do określania zakresu.
+*   **Szeroka encja (np. `Endodoncja`):** Skutkuje wygenerowaniem ogólnych zapytań, które pokryją całą dziedzinę. Idealne do tworzenia kompleksowych map dla dużych sekcji serwisu.
+*   **Wąska encja (np. `Maszynowe pilniki niklowo-tytanowe`):** Spowoduje wygenerowanie bardzo specyficznych zapytań, skupionych na konkretnym produkcie, jego zastosowaniach, porównaniach i problemach użytkowników. Idealne do analizy niszowej.
+
+**2. Jakość `Kontekstu Biznesowego` (Twoja supermoc)**
+To jest najważniejsze pole do kontrolowania trafności zapytań. Zamiast ogólnego opisu firmy, użyj precyzyjnych, instrukcyjnych dyrektyw.
+*   **Przykład słabego kontekstu:** *"Jesteśmy firmą stomatologiczną."* (Wyniki będą ogólne).
+*   **Przykład mocnego, instrukcyjnego kontekstu:**
+    > *"Profil Firmy: Jesteśmy polskim producentem instrumentów do leczenia kanałowego. Grupa Docelowa: Profesjonalni stomatolodzy. Fokus Analizy: Proszę zwrócić szczególną uwagę na zapytania dotyczące: nazw konkurencyjnych narzędzi, problemów dentystów z procedurami oraz porównań różnych technologii i materiałów."*
+    
+    Taki kontekst sprawia, że model priorytetowo traktuje zapytania istotne z punktu widzenia **producenta narzędzi**, a nie pacjenta czy studenta.
+
+**3. `Liczba głównych zapytań do analizy`**
+To prosta, ale skuteczna kontrola nad głębokością i czasem trwania analizy.
+*   **Mniejsza liczba (np. 1-3):** Szybsza, bardziej skoncentrowana analiza, idealna do szybkiego przeglądu tematu.
+*   **Większa liczba (np. 4-5):** Dłuższa, ale znacznie szersza i bardziej dogłębna analiza, która pozwoli odkryć więcej nisz i luk w treści.
+
+Używając tych trzech narzędzi świadomie, masz pełną kontrolę nad pierwszym, fundamentalnym krokiem procesu. Dzięki temu zapewniasz, że cała moc obliczeniowa aplikacji zostanie skierowana na analizę tych aspektów tematu, które są najważniejsze dla osiągnięcia Twoich celów biznesowych.
+
+### 8. Rozwiązywanie Problemów i Dobre Praktyki
 
 *   **Proces trwa bardzo długo:** To normalne. Aplikacja wykonuje dziesiątki, a czasem setki zapytań do zewnętrznych API. Bądź cierpliwy i obserwuj logi postępu.
 *   **Otrzymuję błędy API:** Najpierw sprawdź, czy Twoje klucze API są poprawnie wklejone i aktywne. Następnie sprawdź swoje limity użycia w panelach poszczególnych usług.
