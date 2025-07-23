@@ -342,9 +342,11 @@ async function handleGenerate() {
                 if (line.startsWith('data: ')) {
                     try {
                         const eventData = JSON.parse(line.slice(6));
+                        console.log('Parsed SSE data:', eventData);
                         handleSSEMessage(eventData);
                     } catch (parseError) {
                         console.error('Error parsing SSE message:', parseError);
+                        console.error('Raw line was:', line);
                     }
                 }
             }
@@ -360,21 +362,40 @@ async function handleGenerate() {
 }
 
 function handleSSEMessage(data) {
+    // Debug logging - sprawdź co dociera z serwera
+    console.log('SSE Message received:', data);
+    
     if (data.type === 'log') {
         addLog(data.level, data.message);
     } else if (data.type === 'result') {
-        handleResults(data.data);
-        addLog('SUCCESS', 'Proces zakończony pomyślnie!');
+        // Sprawdź czy dane wyników rzeczywiście istnieją
+        if (data.data && typeof data.data === 'object') {
+            console.log('Processing results:', data.data);
+            handleResults(data.data);
+            addLog('SUCCESS', 'Proces zakończony pomyślnie!');
+        } else {
+            console.error('Result data is missing or invalid:', data);
+            addLog('ERROR', 'Otrzymano nieprawidłowe dane wyników');
+        }
     } else if (data.type === 'error') {
         addLog('ERROR', data.message);
+    } else {
+        console.warn('Unknown SSE message type:', data.type);
     }
 }
 
 function handleResults(results) {
+    console.log('handleResults called with:', results);
+    
     currentResults = results;
     
     // Update preview tab
-    elements.previewContent.textContent = results.mapMarkdown;
+    if (results.mapMarkdown) {
+        elements.previewContent.textContent = results.mapMarkdown;
+        console.log('Updated preview content');
+    } else {
+        console.error('mapMarkdown is missing from results');
+    }
     
     // Update graph tab
     const graph = results.graphJson;
@@ -396,10 +417,16 @@ function handleResults(results) {
     
     // Update stats
     const metadata = results.metadata;
-    elements.resultsStats.innerHTML = `
-        <div><strong>URL-e:</strong> ${metadata.processedUrls}/${metadata.totalUrls}</div>
-        <div><strong>Czas:</strong> ${formatTime(metadata.executionTime)}</div>
-    `;
+    if (metadata) {
+        elements.resultsStats.innerHTML = `
+            <div><strong>URL-e:</strong> ${metadata.processedUrls}/${metadata.totalUrls}</div>
+            <div><strong>Czas:</strong> ${formatTime(metadata.executionTime)}</div>
+        `;
+    } else {
+        console.error('metadata missing from results');
+    }
+    
+    console.log('Results processed, updating UI...');
     
     updateUI();
 }
