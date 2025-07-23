@@ -1,42 +1,45 @@
-# Semantic Architect V-Lite - Docker Configuration
-# Multi-stage build for optimized production image
-
+```dockerfile
+# STAGE 1: Builder - instaluje zależności i buduje aplikację
 FROM node:18-alpine AS builder
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Kopiuj manifesty pakietów dla obu części aplikacji
 COPY package*.json ./
 COPY server/package*.json ./server/
 
-# Install dependencies
-RUN npm ci --only=production && cd server && npm ci --only=production
+# Instaluj zależności w sposób jawny i rozdzielony
+# Krok 1: Instalacja dla głównego folderu
+RUN npm install --only=production
 
-# Production stage
+# Krok 2: Instalacja dla podfolderu /server
+RUN cd server && npm install --only=production
+
+# Kopiuj resztę plików aplikacji
+COPY . .
+
+# (Opcjonalny krok, jeśli aplikacja wymaga budowania, np. Next.js)
+# RUN npm run build
+
+# STAGE 2: Production - tworzy finalny, lekki obraz
 FROM node:18-alpine AS production
-
-# Set working directory
 WORKDIR /app
 
-# Create non-root user for security
+# Stwórz dedykowanego użytkownika dla bezpieczeństwa
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 
-# Copy dependencies and application files
+# Kopiuj zależności i pliki aplikacji z etapu buildera
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/server/node_modules ./server/node_modules
 COPY --chown=nextjs:nodejs . .
 
-# Switch to non-root user
+# Ustaw użytkownika
 USER nextjs
 
-# Expose port 3000
+# Ustaw port
 EXPOSE 3000
+ENV PORT 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "http.get('http://localhost:3000', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
-
-# Start the application
-CMD ["node", "server/server.js"]
+# Komenda startowa
+CMD ["npm", "start"]
+```
