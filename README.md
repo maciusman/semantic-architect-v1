@@ -150,7 +150,7 @@ To Twoje główne narzędzie do określania zakresu.
 *   **Szeroka encja (np. `Endodoncja`):** Skutkuje wygenerowaniem ogólnych zapytań, które pokryją całą dziedzinę. Idealne do tworzenia kompleksowych map dla dużych sekcji serwisu.
 *   **Wąska encja (np. `Maszynowe pilniki niklowo-tytanowe`):** Spowoduje wygenerowanie bardzo specyficznych zapytań, skupionych na konkretnym produkcie, jego zastosowaniach, porównaniach i problemach użytkowników. Idealne do analizy niszowej.
 
-**2. Jakość `Kontekstu Biznesowego` (Twoja supermoc)**
+**2. Jakość `Kontekstu Biznesowego` **
 To jest najważniejsze pole do kontrolowania trafności zapytań. Zamiast ogólnego opisu firmy, użyj precyzyjnych, instrukcyjnych dyrektyw.
 *   **Przykład słabego kontekstu:** *"Jesteśmy firmą stomatologiczną."* (Wyniki będą ogólne).
 *   **Przykład mocnego, instrukcyjnego kontekstu:**
