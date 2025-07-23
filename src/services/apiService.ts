@@ -118,8 +118,7 @@ export class ApiService {
         hl: language,
         gl: location,
         num: count.toString(),
-      }
-      )
+      });
       const response = await fetch(`https://api.serpdata.io/v1/search?${params}`, {
         headers: {
           'Authorization': `Bearer ${this.apiKeys.serpdata}`,
@@ -182,10 +181,21 @@ export class ApiService {
 
   async extractKnowledgeGraph(content: string, centralEntity: string, url: string, model: string): Promise<KnowledgeGraph> {
     const messages = [
+      {
+        role: 'system',
+        content: `You are an expert knowledge graph extractor. Extract entities and relationships from content and return them as a structured JSON knowledge graph.`
       },
       {
         role: 'user',
         content: `Extract a knowledge graph from the content below, which is about "${centralEntity}".
+
+        Content: ${content}
+
+        Return a JSON object with this structure:
+        {
+          "nodes": [{"id": "entity_name", "label": "Entity Name", "type": "entity_type"}],
+          "edges": [{"source": "entity1", "target": "entity2", "relationship": "relationship_type"}]
+        }`
       }
     ];
 
@@ -221,7 +231,7 @@ export class ApiService {
       {
         role: 'user',
         content: `
-          Create a comprehensive topical map for "${centralEntity}" based on this knowledge graph.
+          Create a comprehensive topical map for "${centralEntity}\" based on this knowledge graph.
           
           Business Context: "${businessContext}"
           Language: ${language}
