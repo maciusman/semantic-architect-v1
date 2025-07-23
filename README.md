@@ -11,7 +11,8 @@ To narzędzie nie jest kolejnym generatorem słów kluczowych. To Twój osobisty
 4.  [Przewodnik Użytkownika: Tworzenie Pierwszej Mapy](#4-przewodnik-użytkownika-tworzenie-pierwszej-mapy)
 5.  [Zrozumienie Wyników: Analiza Plików Eksportu](#5-zrozumienie-wyników-analiza-plików-eksportu)
 6.  [Od Danych do Działania: Praktyczne Zastosowanie w SEO](#6-od-danych-do-działania-praktyczne-zastosowanie-w-seo)
-7.  [Rozwiązywanie Problemów i Dobre Praktyki](#7-rozwiazywanie-problemów-i-dobre-praktyki)
+7.  [Zaawansowane Sterowanie Analizą: Rola i Optymalizacja `Query Expansion`](#7-zaawansowane-sterowanie-analizą-rola-i-optymalizacja-query-expansion)
+8.  [Rozwiązywanie Problemów i Dobre Praktyki](#8-rozwiazywanie-problemów-i-dobre-praktyki)
 
 ---
 
