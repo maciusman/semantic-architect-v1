@@ -1,4 +1,3 @@
-```dockerfile
 # STAGE 1: Builder - instaluje zależności i buduje aplikację
 FROM node:18-alpine AS builder
 WORKDIR /app
@@ -42,4 +41,3 @@ ENV PORT 3000
 
 # Komenda startowa
 CMD ["npm", "start"]
-```
