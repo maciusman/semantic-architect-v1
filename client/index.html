@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Architect V-Lite</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="header-title">
+                    <h1>🧠 Semantic Architect</h1>
+                    <span class="version">V-Lite</span>
+                </div>
+                <div class="header-subtitle">
+                    Zaawansowane narzędzie do tworzenia map tematycznych
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel - Configuration -->
+            <div class="panel config-panel">
+                <div class="panel-header">
+                    <h2>⚙️ Konfiguracja Projektu</h2>
+                </div>
+                <div class="panel-content">
+                    <!-- API Keys Section -->
+                    <div class="config-section">
+                        <div class="section-header" onclick="toggleApiKeys()">
+                            <h3>🔑 Ustawienia API</h3>
+                            <span class="toggle-icon" id="api-toggle">👁️</span>
+                        </div>
+                        <div class="section-content" id="api-section" style="display: none;">
+                            <div class="form-group">
+                                <label>OpenRouter API Key:</label>
+                                <input type="password" id="openrouter-key" placeholder="Wprowadź OpenRouter API key">
+                            </div>
+                            <div class="form-group">
+                                <label>Jina AI API Key:</label>
+                                <input type="password" id="jina-key" placeholder="Wprowadź Jina AI API key">
+                            </div>
+                            <div class="form-group">
+                                <label>SerpData API Key:</label>
+                                <input type="password" id="serpdata-key" placeholder="Wprowadź SerpData API key">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Configuration -->
+                    <div class="config-section">
+                        <h3>🌐 Projekt</h3>
+                        <div class="form-group">
+                            <label>Nazwa Projektu:</label>
+                            <input type="text" id="project-name" placeholder="np. Baseny Ogrodowe - Klient X">
+                        </div>
+                        <div class="form-group">
+                            <label>Centralna Encja / Temat:</label>
+                            <input type="text" id="central-entity" placeholder="np. basen ogrodowy">
+                        </div>
+                        <div class="form-group">
+                            <label>Kontekst Biznesowy:</label>
+                            <textarea id="business-context" rows="3" placeholder="np. Jesteśmy producentem basenów poliestrowych premium"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Język:</label>
+                                <select id="language">
+                                    <option value="pl">Polski</option>
+                                    <option value="en">English</option>
+                                    <option value="de">Deutsch</option>
+                                    <option value="es">Español</option>
+                                    <option value="fr">Français</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Lokalizacja:</label>
+                                <select id="location">
+                                    <option value="pl">Polska</option>
+                                    <option value="us">USA</option>
+                                    <option value="de">Niemcy</option>
+                                    <option value="gb">Wielka Brytania</option>
+                                    <option value="es">Hiszpania</option>
+                                    <option value="fr">Francja</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- URL Source Configuration -->
+                    <div class="config-section">
+                        <h3>🔍 Źródło URL-i</h3>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="url-source" value="auto" checked>
+                                <span>Automatycznie (zalecane)</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="url-source" value="manual">
+                                <span>Manualnie</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Auto Config -->
+                        <div id="auto-config" class="url-config">
+                            <div class="form-group">
+                                <label>Główne zapytanie do Google:</label>
+                                <input type="text" id="main-query" placeholder="Automatycznie z Centralnej Encji">
+                            </div>
+                            <div class="form-group">
+                                <label>Liczba głównych zapytań (Query Expansion): <span id="query-count-display">3</span></label>
+                                <input type="range" id="query-expansion-count" min="1" max="5" value="3">
+                            </div>
+                            <div class="form-group">
+                                <label>Liczba URL-i na zapytanie: <span id="urls-count-display">5</span></label>
+                                <input type="range" id="urls-per-query" min="3" max="10" value="5">
+                            </div>
+                        </div>
+
+                        <!-- Manual Config -->
+                        <div id="manual-config" class="url-config" style="display: none;">
+                            <div class="form-group">
+                                <label>Adresy URL do analizy (każdy w nowej linii):</label>
+                                <textarea id="manual-urls" rows="6" placeholder="https://example1.com&#10;https://example2.com&#10;https://example3.com"></textarea>
+                                <small class="url-count">URL-i: <span id="manual-url-count">0</span></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Models Configuration -->
+                    <div class="config-section">
+                        <h3>⚡ Modele AI</h3>
+                        <div class="form-group">
+                            <label>Model AI do Ekstrakcji:</label>
+                            <select id="extraction-model">
+                                <option value="">Wybierz model...</option>
+                            </select>
+                            <div class="loading-text" id="models-loading" style="display: none;">Ładowanie modeli...</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Model AI do Syntezy:</label>
+                            <select id="synthesis-model">
+                                <option value="">Wybierz model...</option>
+                            </select>
+                        </div>
+                        <div class="api-warning" id="api-warning" style="display: none;">
+                            ⚠️ Wprowadź klucz OpenRouter API, aby załadować dostępne modele.
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="generate-section">
+                        <button id="generate-btn" class="generate-btn" disabled>
+                            🧠 GENERUJ MAPĘ TEMATYCZNĄ
+                        </button>
+                        <div class="validation-errors" id="validation-errors"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Panel - Logs -->
+            <div class="panel logs-panel">
+                <div class="panel-header">
+                    <h2>📟 Logi Procesu</h2>
+                    <div class="processing-indicator" id="processing-indicator" style="display: none;">
+                        <div class="pulse-dot"></div>
+                        <span>Przetwarzanie...</span>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="logs-container" id="logs-container">
+                        <div class="logs-empty">
+                            <div class="empty-icon">📟</div>
+                            <p>Gotowy do rozpoczęcia przetwarzania...</p>
+                            <small>Logi będą wyświetlane tutaj w czasie rzeczywistym</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="logs-footer">
+                    <span>Wpisy: <span id="logs-count">0</span></span>
+                    <span id="live-indicator" style="display: none;">🔴 Na żywo</span>
+                </div>
+            </div>
+
+            <!-- Right Panel - Results -->
+            <div class="panel results-panel">
+                <div class="panel-header">
+                    <h2>📊 Wyniki i Eksport</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="results-empty" id="results-empty">
+                        <div class="empty-icon">📦</div>
+                        <p>Brak wyników</p>
+                        <small>Uruchom generowanie mapy tematycznej</small>
+                    </div>
+                    
+                    <div class="results-processing" id="results-processing" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Przetwarzanie w toku...</p>
+                        <small>Proszę czekać</small>
+                    </div>
+
+                    <div class="results-content" id="results-content" style="display: none;">
+                        <!-- Tabs -->
+                        <div class="results-tabs">
+                            <button class="tab-btn active" onclick="switchTab('preview')">👁️ Podgląd</button>
+                            <button class="tab-btn" onclick="switchTab('graph')">📊 Graf</button>
+                        </div>
+
+                        <!-- Preview Tab -->
+                        <div class="tab-content" id="preview-tab">
+                            <div class="tab-header">
+                                <span>Mapa Tematyczna</span>
+                                <button onclick="copyToClipboard()" class="copy-btn" title="Skopiuj do schowka" id="copy-btn">📋</button>
+                            </div>
+                            <div class="preview-content" id="preview-content"></div>
+                        </div>
+
+                        <!-- Graph Tab -->
+                        <div class="tab-content" id="graph-tab" style="display: none;">
+                            <div class="tab-header">
+                                <span>Graf Wiedzy</span>
+                            </div>
+                            <div class="graph-stats" id="graph-stats"></div>
+                            <div class="graph-content" id="graph-content"></div>
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="results-stats" id="results-stats"></div>
+
+                        <!-- Export Buttons -->
+                        <div class="export-section">
+                            <button onclick="exportMarkdown()" class="export-btn">📄 Eksportuj Mapę (Markdown)</button>
+                            <button onclick="exportGraph()" class="export-btn">📊 Eksportuj Graf (JSON)</button>
+                            <button onclick="exportProject()" class="export-btn">📦 Eksportuj Projekt (ZIP)</button>
+                            <button onclick="exportContent()" class="export-btn">💾 Eksportuj Treść (JSON)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
