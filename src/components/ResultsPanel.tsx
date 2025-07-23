@@ -85,6 +85,13 @@ Data generowania: ${new Date().toLocaleString('pl-PL')}
     downloadFile(zipContent, filename, 'application/json');
   };
 
+  const handleExportScrapedContent = () => {
+    if (!results) return;
+    
+    const filename = `${results.metadata.config.project.name.replace(/[^a-zA-Z0-9]/g, '_')}_tresci.json`;
+    downloadFile(JSON.stringify(results.scrapedContent, null, 2), filename, 'application/json');
+  };
+
   const formatExecutionTime = (ms: number) => {
     if (ms < 1000) return `${ms}ms`;
     if (ms < 60000) return `${Math.round(ms / 1000)}s`;
@@ -241,6 +248,14 @@ Data generowania: ${new Date().toLocaleString('pl-PL')}
             >
               <Archive className="w-4 h-4" />
               <span>Eksportuj Projekt (ZIP)</span>
+            </button>
+            
+            <button
+              onClick={handleExportScrapedContent}
+              className="w-full flex items-center justify-center space-x-2 py-2 px-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Eksportuj Treść (JSON)</span>
             </button>
           </div>
         </>

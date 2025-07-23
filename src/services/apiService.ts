@@ -182,41 +182,10 @@ export class ApiService {
 
   async extractKnowledgeGraph(content: string, centralEntity: string, url: string, model: string): Promise<KnowledgeGraph> {
     const messages = [
-      {
-        role: 'system',
-        content: `You are an expert knowledge graph extraction system. Extract entities, relationships, and semantic information from content and return ONLY valid JSON.`
       },
       {
         role: 'user',
-        content: `
-          Extract a knowledge graph from this content about "${centralEntity}".
-          Source URL: ${url}
-          
-          Content:
-          ${content}
-          
-          Return ONLY a JSON object with this exact structure:
-          {
-            "nodes": [
-              {
-                "id": "unique_id",
-                "label": "Entity Name",
-                "type": "entity_type",
-                "properties": {"key": "value"}
-              }
-            ],
-            "edges": [
-              {
-                "source": "source_node_id",
-                "target": "target_node_id",
-                "relationship": "relationship_type",
-                "weight": 0.8
-              }
-            ]
-          }
-          
-          Focus on entities most relevant to "${centralEntity}". Include semantic relationships, attributes, and contextual connections.
-        `
+        content: `Extract a knowledge graph from the content below, which is about "${centralEntity}".
       }
     ];
 

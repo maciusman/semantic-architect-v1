@@ -1,4 +1,5 @@
 import { ApiService } from './apiService';
+import { cleanMarkdown } from '../utils/markdownCleaner';
 import { AppConfig, LogEntry, ProcessResults, KnowledgeGraph, KnowledgeGraphNode, KnowledgeGraphEdge } from '../types';
 
 export class ProcessingService {
@@ -42,6 +43,7 @@ export class ProcessingService {
       const knowledgeFragments = await this.extractKnowledgeGraphs(
         scrapedContent,
         config.project.centralEntity,
+        config.project.businessContext,
         config.models.extractionModel
       );
       this.addLog('SUCCESS', `Wygenerowano ${knowledgeFragments.length} fragmentów grafu wiedzy`);
@@ -60,6 +62,7 @@ export class ProcessingService {
       return {
         topicalMap,
         knowledgeGraph: consolidatedGraph,
+        scrapedContent,
         metadata: {
           totalUrls: urls.length,
           processedUrls: scrapedContent.length,
@@ -174,6 +177,7 @@ export class ProcessingService {
   private async extractKnowledgeGraphs(
     scrapedContent: Array<{ url: string; content: string }>,
     centralEntity: string,
+    businessContext: string,
     model: string
   ): Promise<KnowledgeGraph[]> {
     this.addLog('INFO', `Rozpoczynanie ekstrakcji grafów wiedzy z ${scrapedContent.length} stron...`);
@@ -186,11 +190,15 @@ export class ProcessingService {
       try {
         this.addLog('INFO', `Generuję graf wiedzy dla ${url} (${i + 1}/${scrapedContent.length})`);
         
-        // Truncate content if too long (to avoid token limits)
-        const truncatedContent = content.length > 8000 ? content.substring(0, 8000) + '...' : content;
+        // Clean and process content
+        const cleanedContent = cleanMarkdown(content);
+        this.addLog('INFO', `Oczyszczono treść dla ${url}: ${content.length} → ${cleanedContent.length} znaków`);
+        
+        // Truncate cleaned content if still too long (to avoid token limits)
+        const processedContent = cleanedContent.length > 8000 ? cleanedContent.substring(0, 8000) + '...' : cleanedContent;
         
         const graph = await this.apiService.extractKnowledgeGraph(
-          truncatedContent,
+          processedContent,
           centralEntity,
           url,
           model

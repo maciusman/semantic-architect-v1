@@ -45,6 +45,7 @@ export interface LogEntry {
 export interface ProcessResults {
   topicalMap: string;
   knowledgeGraph: any;
+  scrapedContent: Array<{ url: string; content: string }>;
   metadata: {
     totalUrls: number;
     processedUrls: number;
