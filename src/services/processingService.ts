@@ -1,5 +1,6 @@
 import { ApiService } from './apiService';
 import { cleanMarkdown } from '../utils/markdownCleaner';
+import { cleanKnowledgeGraph, getCleaningStats } from '../utils/graphCleaner';
 import { AppConfig, LogEntry, ProcessResults, KnowledgeGraph, KnowledgeGraphNode, KnowledgeGraphEdge } from '../types';
 
 export class ProcessingService {
@@ -197,16 +198,26 @@ export class ProcessingService {
         // Truncate cleaned content if still too long (to avoid token limits)
         const processedContent = cleanedContent.length > 8000 ? cleanedContent.substring(0, 8000) + '...' : cleanedContent;
         
-        const graph = await this.apiService.extractKnowledgeGraph(
+        const rawGraph = await this.apiService.extractKnowledgeGraph(
           processedContent,
           centralEntity,
           url,
           model
         );
         
-        if (graph.nodes && graph.nodes.length > 0) {
-          results.push(graph);
-          this.addLog('SUCCESS', `Wygenerowano graf z ${graph.nodes.length} węzłami dla ${url}`);
+        if (rawGraph.nodes && rawGraph.nodes.length > 0) {
+          // Step 3.4: Clean the raw graph to remove noise
+          const cleanedGraph = cleanKnowledgeGraph(rawGraph);
+          const stats = getCleaningStats(rawGraph, cleanedGraph);
+          
+          this.addLog('INFO', `Czyszczenie grafu dla ${url}: ${stats.nodesRemoved} węzłów usuniętych (${stats.nodesFilteredPercent}%), ${stats.edgesRemoved} krawędzi usuniętych (${stats.edgesFilteredPercent}%)`);
+          
+          if (cleanedGraph.nodes && cleanedGraph.nodes.length > 0) {
+            results.push(cleanedGraph);
+            this.addLog('SUCCESS', `Wygenerowano oczyszczony graf z ${cleanedGraph.nodes.length} węzłami dla ${url}`);
+          } else {
+            this.addLog('WARNING', `Graf dla ${url} jest pusty po oczyszczeniu - zbyt dużo szumu`);
+          }
         } else {
           this.addLog('WARNING', `Pusty graf dla ${url}`);
         }

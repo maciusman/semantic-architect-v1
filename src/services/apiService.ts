@@ -183,18 +183,46 @@ export class ApiService {
     const messages = [
       {
         role: 'system',
-        content: `You are an expert knowledge graph extractor. Extract entities and relationships from content and return them as a structured JSON knowledge graph.`
+        content: `ROLE: You are a precision knowledge graph extraction system. Your task is to analyze content and output ONLY a valid JSON object representing the semantic knowledge within.`
       },
       {
         role: 'user',
-        content: `Extract a knowledge graph from the content below, which is about "${centralEntity}".
+        content: `BUSINESS CONTEXT: Professional medical/dental industry content analysis.
 
-        Content: ${content}
+RULES AND EXCLUSIONS (CRITICAL!):
+- IGNORE AND DO NOT CREATE ENTITIES FOR: anything related to website cookies (e.g., _ga, PHPSESSID, CookieConsent), cookie categories (e.g., Necessary Cookies), privacy policies, user actions (e.g., login, register, cart), website features, navigation elements, or general IT service providers (e.g., Google, Amazon, Meta, Cookiebot, Edrone) unless they are directly a manufacturer or distributor in the medical/dental field.
+- FOCUS EXCLUSIVELY ON: entities directly relevant to the Business Context and the Central Entity "${centralEntity}". This includes:
+  - Medical and dental products, instruments, and materials.
+  - Brands and manufacturers in the dental industry (e.g., Poldent, VDW, Endostar).
+  - Medical procedures and dental specialties (e.g., Endodontics, Root Canal Treatment).
+  - Product categories and subcategories.
+  - Key features and properties of medical products.
+  - Scientific concepts and technologies relevant to the field.
+- MERGE DUPLICATES: If an entity appears with different types, create a single, consistent node for it.
 
-        Return a JSON object with this structure:
+TASK:
+Extract a knowledge graph from the content below, which is about "${centralEntity}".
+
+Content: ${content}
+
+Return ONLY a JSON object with this exact structure:
         {
-          "nodes": [{"id": "entity_name", "label": "Entity Name", "type": "entity_type"}],
-          "edges": [{"source": "entity1", "target": "entity2", "relationship": "relationship_type"}]
+          "nodes": [
+            {
+              "id": "unique_id_with_type",
+              "label": "Entity Name",
+              "type": "Entity Type",
+              "properties": {"key": "value"}
+            }
+          ],
+          "edges": [
+            {
+              "source": "source_node_id",
+              "target": "target_node_id",
+              "relationship": "RELATIONSHIP_TYPE",
+              "weight": 0.85
+            }
+          ]
         }`
       }
     ];
