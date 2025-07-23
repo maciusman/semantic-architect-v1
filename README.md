@@ -1,9 +1,3 @@
-Jasne. Rozumiem, że potrzebujesz finalnego, kompletnego pliku `README.md`, który będzie pełnił rolę instrukcji obsługi, dokumentacji technicznej i przewodnika strategicznego dla użytkowników aplikacji. Uwzględniam dodanie eksportu pobranych treści i skupiam się na maksymalnej precyzji i wyczerpaniu każdego tematu.
-
-Oto gotowy plik.
-
----
-
 # Semantic Architect V-Lite
 
 Witaj w **Semantic Architect V-Lite** – zaawansowanej aplikacji desktopowej stworzonej dla specjalistów SEO, strategów contentu i marketerów, którzy chcą tworzyć strategie oparte na głębokim zrozumieniu działania wyszukiwarek.
