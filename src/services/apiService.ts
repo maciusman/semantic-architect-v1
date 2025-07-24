@@ -235,6 +235,7 @@ Extract a knowledge graph from the content below, which is about "${centralEntit
 Content: ${content}
 
 Return ONLY a JSON object with this exact structure:
+
         {
           "nodes": [
             {
@@ -249,10 +250,17 @@ Return ONLY a JSON object with this exact structure:
               "source": "source_node_id",
               "target": "target_node_id",
               "relationship": "RELATIONSHIP_TYPE",
-              "weight": 0.85
+              "weight": 0.0
             }
           ]
-        }`
+        }
+
+**Instructions for 'weight' property:**
+The 'weight' must be a floating-point number between 0.1 and 1.0, representing your confidence in the extracted relationship based on the source text.
+- **Use 0.9 - 1.0** for direct, unambiguous statements of fact (e.g., "X is a type of Y", "X is manufactured by Y").
+- **Use 0.6 - 0.8** for strong, implied relationships (e.g., a section about X is a major part of an article about Y).
+- **Use 0.1 - 0.5** for weak, contextual, or indirect associations.
+Do not assign a weight of 0.0 unless the relationship is purely speculative.`
       }
     ];
 
