@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { ConfigPanel } from './components/ConfigPanel';
 import { LogsPanel } from './components/LogsPanel';
 import { ResultsPanel } from './components/ResultsPanel';
-import { SessionPanel } from './components/SessionPanel';
 import { StorageService } from './services/storageService';
 import { ApiService } from './services/apiService';
 import { ProcessingService } from './services/processingService';
-import { SessionService } from './services/sessionService';
-import { AppConfig, ApiKeys, LogEntry, ProcessResults, SessionState } from './types';
+import { AppConfig, ApiKeys, LogEntry, ProcessResults } from './types';
 
 const defaultConfig: AppConfig = {
   project: {
@@ -39,9 +37,6 @@ function App() {
   const [results, setResults] = useState<ProcessResults | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [showSessionPanel, setShowSessionPanel] = useState(false);
 
   useEffect(() => {
     // Load saved configuration and API keys
@@ -85,58 +80,37 @@ function App() {
     setLogs([]);
   };
 
-  const handleGenerate = async (resumeSessionId?: string) => {
+  const handleGenerate = async () => {
     if (isProcessing) return;
 
     setIsProcessing(true);
     setIsCancelled(false);
-    setIsPaused(false);
     setResults(null);
     clearLogs();
 
     try {
       const apiService = new ApiService(apiKeys);
-      const processingService = new ProcessingService(
-        apiService, 
-        addLog, 
-        () => isCancelled,
-        () => isPaused,
-        resumeSessionId
-      );
+      const processingService = new ProcessingService(apiService, addLog, () => isCancelled);
       
-      if (resumeSessionId) {
-        setCurrentSessionId(resumeSessionId);
-        addLog({
-          id: Date.now().toString(),
-          timestamp: new Date(),
-          level: 'INFO',
-          message: `Wznawianie sesji "${resumeSessionId}"`
-        });
-      } else {
-        addLog({
-          id: Date.now().toString(),
-          timestamp: new Date(),
-          level: 'INFO',
-          message: `Rozpoczynanie przetwarzania projektu "${config.project.name}"`
-        });
-      }
+      addLog({
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        level: 'INFO',
+        message: `Rozpoczynanie przetwarzania projektu "${config.project.name}"`
+      });
 
-      const processResults = await processingService.processTopicalMap(config, resumeSessionId);
+      const processResults = await processingService.processTopicalMap(config);
       setResults(processResults);
       
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Nieznany błąd';
-      if (!errorMessage.includes('zapauzowany') && !errorMessage.includes('anulowany')) {
-        addLog({
-          id: Date.now().toString(),
-          timestamp: new Date(),
-          level: 'ERROR',
-          message: `Proces nie powiódł się: ${errorMessage}`
-        });
-      }
+      addLog({
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        level: 'ERROR',
+        message: `Proces nie powiódł się: ${error instanceof Error ? error.message : 'Nieznany błąd'}`
+      });
     } finally {
       setIsProcessing(false);
-      setCurrentSessionId(null);
     }
   };
 
@@ -150,48 +124,17 @@ function App() {
     });
   };
 
-  const handlePause = () => {
-    setIsPaused(true);
-    addLog({
-      id: Date.now().toString(),
-      timestamp: new Date(),
-      level: 'WARNING',
-      message: 'Proces pauzowany przez użytkownika...'
-    });
-  };
-
-  const handleResumeSession = (sessionId: string) => {
-    handleGenerate(sessionId);
-  };
-
-  const handleNewSession = () => {
-    setShowSessionPanel(false);
-    // Reset to new session mode
-    setResults(null);
-    clearLogs();
-  };
-
   return (
     <div className="h-screen flex bg-gray-50">
-      {showSessionPanel ? (
-        <SessionPanel
-          currentSessionId={currentSessionId}
-          onResumeSession={handleResumeSession}
-          onNewSession={handleNewSession}
-        />
-      ) : (
-        <ConfigPanel
-          config={config}
-          apiKeys={apiKeys}
-          onConfigChange={setConfig}
-          onApiKeysChange={setApiKeys}
-          onGenerate={() => handleGenerate()}
-          onStop={handleStop}
-          onPause={handlePause}
-          onShowSessions={() => setShowSessionPanel(true)}
-          isProcessing={isProcessing}
-        />
-      )}
+      <ConfigPanel
+        config={config}
+        apiKeys={apiKeys}
+        onConfigChange={setConfig}
+        onApiKeysChange={setApiKeys}
+        onGenerate={handleGenerate}
+        onStop={handleStop}
+        isProcessing={isProcessing}
+      />
       
       <LogsPanel
         logs={logs}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Eye, EyeOff, Globe, Search, Brain, Zap, FolderOpen, Pause } from 'lucide-react';
+import { Settings, Eye, EyeOff, Globe, Search, Brain, Zap } from 'lucide-react';
 import { AppConfig, ApiKeys, OpenRouterModel } from '../types';
 import { StorageService } from '../services/storageService';
 import { ApiService } from '../services/apiService';
@@ -11,8 +11,6 @@ interface ConfigPanelProps {
   onApiKeysChange: (keys: ApiKeys) => void;
   onGenerate: () => void;
   onStop: () => void;
-  onPause: () => void;
-  onShowSessions: () => void;
   onStop: () => void;
   isProcessing: boolean;
 }
@@ -24,8 +22,6 @@ export function ConfigPanel({
   onApiKeysChange,
   onGenerate,
   onStop,
-  onPause,
-  onShowSessions,
   isProcessing
 }: ConfigPanelProps) {
   const [showApiKeys, setShowApiKeys] = useState(false);
@@ -92,21 +88,12 @@ export function ConfigPanel({
     <div className="w-80 bg-white border-r border-gray-200 p-6 overflow-y-auto">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Brain className="w-8 h-8 text-indigo-600" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Semantic Architect</h1>
-              <p className="text-sm text-gray-500">V-Lite</p>
-            </div>
+        <div className="flex items-center space-x-3">
+          <Brain className="w-8 h-8 text-indigo-600" />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Semantic Architect</h1>
+            <p className="text-sm text-gray-500">V-Lite</p>
           </div>
-          <button
-            onClick={onShowSessions}
-            className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
-            title="Zarządzaj sesjami"
-          >
-            <FolderOpen className="w-5 h-5" />
-          </button>
         </div>
 
         {/* API Keys Section */}
@@ -439,8 +426,8 @@ export function ConfigPanel({
           </div>
         </div>
 
-        {/* Control Buttons */}
-        <div className="pt-4 space-y-2">
+        {/* Generate Button */}
+        <div className="pt-4">
           {!isProcessing ? (
             <button
               onClick={onGenerate}
@@ -455,22 +442,13 @@ export function ConfigPanel({
               <span>GENERUJ MAPĘ TEMATYCZNĄ</span>
             </button>
           ) : (
-            <div className="space-y-2">
-              <button
-                onClick={onPause}
-                className="w-full py-2 px-4 rounded-lg font-semibold text-white bg-yellow-600 hover:bg-yellow-700 transition-all duration-200 flex items-center justify-center space-x-2"
-              >
-                <Pause className="w-4 h-4" />
-                <span>PAUZUJ PROCES</span>
-              </button>
-              <button
-                onClick={onStop}
-                className="w-full py-2 px-4 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 flex items-center justify-center space-x-2"
-              >
-                <Brain className="w-4 h-4" />
-                <span>ANULUJ PROCES</span>
-              </button>
-            </div>
+            <button
+              onClick={onStop}
+              className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <Brain className="w-5 h-5" />
+              <span>ZATRZYMAJ PROCES</span>
+            </button>
           )}
 
           {!canGenerate() && !isProcessing && (
