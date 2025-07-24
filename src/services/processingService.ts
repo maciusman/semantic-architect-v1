@@ -144,25 +144,28 @@ export class ProcessingService {
     this.addLog('SUCCESS', `Wygenerowano ${initialQueries.length} początkowych zapytań.`);
 
     const allUrls: string[] = [];
-    const queriesToProcess = [...initialQueries];
+    let queriesToProcess: string[] = [...initialQueries]; // Queries for the current round
     const processedQueries = new Set<string>();
-    let currentDepth = 0;
 
-    while (queriesToProcess.length > 0 && currentDepth < config.autoConfig.serpExplorationDepth) {
-      currentDepth++;
-      this.addLog('INFO', `Rozpoczynanie rundy eksploracji SERP (głębokość ${currentDepth}/${config.autoConfig.serpExplorationDepth})...`);
+    for (let currentRound = 1; currentRound <= config.autoConfig.serpExplorationDepth; currentRound++) {
+      if (queriesToProcess.length === 0) {
+        this.addLog('INFO', `Brak nowych zapytań do przetworzenia w rundzie ${currentRound}. Zakończenie eksploracji.`);
+        break; // No more queries to process, exit loop
+      }
+
+      this.addLog('INFO', `Rozpoczynanie rundy eksploracji SERP (głębokość ${currentRound}/${config.autoConfig.serpExplorationDepth})...`);
       
-      const queriesInThisRound = [...queriesToProcess]; // Process queries currently in queue
-      queriesToProcess.length = 0; // Clear queue for next round's PAA
+      const queriesForThisRound = [...queriesToProcess]; // Snapshot queries for this round
+      queriesToProcess = []; // Clear for next round's PAA queries
 
-      for (const query of queriesInThisRound) {
+      for (const query of queriesForThisRound) {
         if (processedQueries.has(query)) {
           continue; // Skip already processed queries
         }
         processedQueries.add(query);
 
         this.addLog('INFO', `Wyszukiwanie URL-i dla zapytania: "${query}"`);
-        
+
         try {
           const results = await this.apiService.searchSerp(
             query,
@@ -170,23 +173,23 @@ export class ProcessingService {
             config.project.location,
             config.autoConfig.urlsPerQuery
           );
-          
+
           const urls = results.map(r => r.link);
           allUrls.push(...urls);
           this.addLog('INFO', `Znaleziono ${urls.length} URL-i dla "${query}"`);
-          
+
           // Extract PAA questions and add to queue for next round
           results.forEach(result => {
             if (result.paaQuestions) {
               result.paaQuestions.forEach(paaQuery => {
-                if (!processedQueries.has(paaQuery) && !queriesToProcess.includes(paaQuery)) {
+                if (!processedQueries.has(paaQuery) && !queriesToProcess.includes(paaQuery)) { // Check if not already processed or in current queue
                   queriesToProcess.push(paaQuery);
-                  this.addLog('INFO', `Dodano nowe zapytanie PAA do kolejki: "${paaQuery}"`);
+                  this.addLog('INFO', `Dodano nowe zapytanie PAA do kolejki dla następnej rundy: "${paaQuery}"`);
                 }
               });
             }
           });
-          
+
           // Small delay to be respectful to the API
           await this.delay(500);
         } catch (error) {
