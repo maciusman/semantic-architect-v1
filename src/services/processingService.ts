@@ -203,6 +203,7 @@ export class ProcessingService {
         const rawGraph = await this.apiService.extractKnowledgeGraph(
           processedContent,
           centralEntity,
+          businessContext,
           url,
           model,
           language

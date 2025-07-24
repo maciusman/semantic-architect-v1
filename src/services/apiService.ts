@@ -1,10 +1,23 @@
 import { OpenRouterModel, SerpResult, KnowledgeGraph } from '../types';
 
+// Language mapping constant to avoid duplication
+const LANGUAGE_MAP: Record<string, string> = {
+  'pl': 'Polish',
+  'en': 'English',
+  'de': 'German',
+  'es': 'Spanish',
+  'fr': 'French'
+};
+
 export class ApiService {
   private apiKeys: { openrouter: string; jina: string; serpdata: string };
 
   constructor(apiKeys: { openrouter: string; jina: string; serpdata: string }) {
     this.apiKeys = apiKeys;
+  }
+
+  private getLanguageName(code: string): string {
+    return LANGUAGE_MAP[code] || 'English';
   }
 
   async fetchOpenRouterModels(): Promise<OpenRouterModel[]> {
@@ -180,16 +193,15 @@ export class ApiService {
   }
 
   async extractKnowledgeGraph(content: string, centralEntity: string, url: string, model: string, language: string): Promise<KnowledgeGraph> {
-    // Map language codes to full language names
-    const languageNames: Record<string, string> = {
-      'pl': 'Polish',
-      'en': 'English',
-      'de': 'German',
-      'es': 'Spanish',
-      'fr': 'French'
-    };
-    
-    const targetLanguage = languageNames[language] || 'English';
+  async extractKnowledgeGraph(
+    content: string, 
+    centralEntity: string, 
+    businessContext: string, 
+    url: string, 
+    model: string, 
+    language: string
+  ): Promise<KnowledgeGraph> {
+    const targetLanguage = this.getLanguageName(language);
     
     const messages = [
       {
@@ -203,7 +215,7 @@ All extracted 'label' and 'type' values in the final JSON MUST be in the TARGET 
       },
       {
         role: 'user',
-        content: `BUSINESS CONTEXT: Professional medical/dental industry content analysis.
+        content: `BUSINESS CONTEXT: ${businessContext}
 
 RULES AND EXCLUSIONS (CRITICAL!):
 - IGNORE AND DO NOT CREATE ENTITIES FOR: anything related to website cookies (e.g., _ga, PHPSESSID, CookieConsent), cookie categories (e.g., Necessary Cookies), privacy policies, user actions (e.g., login, register, cart), website features, navigation elements, or general IT service providers (e.g., Google, Amazon, Meta, Cookiebot, Edrone) unless they are directly a manufacturer or distributor in the medical/dental field.
@@ -267,16 +279,7 @@ Return ONLY a JSON object with this exact structure:
     language: string,
     model: string
   ): Promise<string> {
-    // Map language codes to full language names
-    const languageNames: Record<string, string> = {
-      'pl': 'Polish',
-      'en': 'English', 
-      'de': 'German',
-      'es': 'Spanish',
-      'fr': 'French'
-    };
-    
-    const targetLanguage = languageNames[language] || 'English';
+    const targetLanguage = this.getLanguageName(language);
     
     const messages = [
       {
