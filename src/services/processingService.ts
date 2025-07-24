@@ -457,8 +457,6 @@ export class ProcessingService {
         throw new Error('Proces zapauzowany przez użytkownika');
       }
       
-      const { url, content } = scrapedContent[i];
-      
       try {
         this.addLog('INFO', `Generuję graf wiedzy dla ${url} (${i + 1}/${scrapedContent.length})`);
         
