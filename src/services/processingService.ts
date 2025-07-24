@@ -45,7 +45,8 @@ export class ProcessingService {
         scrapedContent,
         config.project.centralEntity,
         config.project.businessContext,
-        config.models.extractionModel
+        config.models.extractionModel,
+        config.project.language
       );
       this.addLog('SUCCESS', `Wygenerowano ${knowledgeFragments.length} fragmentów grafu wiedzy`);
 
@@ -179,7 +180,8 @@ export class ProcessingService {
     scrapedContent: Array<{ url: string; content: string }>,
     centralEntity: string,
     businessContext: string,
-    model: string
+    model: string,
+    language: string
   ): Promise<KnowledgeGraph[]> {
     this.addLog('INFO', `Rozpoczynanie ekstrakcji grafów wiedzy z ${scrapedContent.length} stron...`);
     
@@ -202,7 +204,8 @@ export class ProcessingService {
           processedContent,
           centralEntity,
           url,
-          model
+          model,
+          language
         );
         
         if (rawGraph.nodes && rawGraph.nodes.length > 0) {

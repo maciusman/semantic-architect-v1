@@ -179,11 +179,27 @@ export class ApiService {
     }
   }
 
-  async extractKnowledgeGraph(content: string, centralEntity: string, url: string, model: string): Promise<KnowledgeGraph> {
+  async extractKnowledgeGraph(content: string, centralEntity: string, url: string, model: string, language: string): Promise<KnowledgeGraph> {
+    // Map language codes to full language names
+    const languageNames: Record<string, string> = {
+      'pl': 'Polish',
+      'en': 'English',
+      'de': 'German',
+      'es': 'Spanish',
+      'fr': 'French'
+    };
+    
+    const targetLanguage = languageNames[language] || 'English';
+    
     const messages = [
       {
         role: 'system',
-        content: `ROLE: You are a precision knowledge graph extraction system. Your task is to analyze content and output ONLY a valid JSON object representing the semantic knowledge within.`
+        content: `ROLE: You are a precision knowledge graph extraction system. Your task is to analyze content and output ONLY a valid JSON object representing the semantic knowledge within, adhering strictly to the specified TARGET LANGUAGE.
+
+TARGET LANGUAGE: ${targetLanguage}
+
+CRITICAL LANGUAGE INSTRUCTION:
+All extracted 'label' and 'type' values in the final JSON MUST be in the TARGET LANGUAGE. If you encounter an entity or concept in another language (e.g., an English term on a Polish site), you MUST translate it accurately to the TARGET LANGUAGE. For example, if the content mentions "root canal treatment" but the TARGET LANGUAGE is Polish, the node label MUST be "Leczenie kanałowe". Maintain semantic accuracy while ensuring linguistic consistency.`
       },
       {
         role: 'user',
@@ -251,10 +267,26 @@ Return ONLY a JSON object with this exact structure:
     language: string,
     model: string
   ): Promise<string> {
+    // Map language codes to full language names
+    const languageNames: Record<string, string> = {
+      'pl': 'Polish',
+      'en': 'English', 
+      'de': 'German',
+      'es': 'Spanish',
+      'fr': 'French'
+    };
+    
+    const targetLanguage = languageNames[language] || 'English';
+    
     const messages = [
       {
         role: 'system',
-        content: `You are an expert content strategist and SEO specialist. Create comprehensive topical maps based on knowledge graphs.`
+        content: `You are an expert content strategist and SEO specialist. Create comprehensive topical maps based on knowledge graphs, writing exclusively in the specified TARGET LANGUAGE.
+
+TARGET LANGUAGE: ${targetLanguage}
+
+LANGUAGE CONSISTENCY INSTRUCTION:
+Ensure that the entire report, including all headers, subtopics, analysis, and strategic recommendations, is written exclusively in the TARGET LANGUAGE. Use proper terminology and phrasing native to this language. Do not mix languages in the output.`
       },
       {
         role: 'user',
@@ -262,7 +294,7 @@ Return ONLY a JSON object with this exact structure:
           Create a comprehensive topical map for "${centralEntity}\" based on this knowledge graph.
           
           Business Context: "${businessContext}"
-          Language: ${language}
+          Target Language: ${targetLanguage}
           
           Knowledge Graph:
           ${JSON.stringify(consolidatedGraph, null, 2)}
@@ -276,7 +308,7 @@ Return ONLY a JSON object with this exact structure:
           5. **Content Gap Analysis** - Missing areas to explore
           6. **Strategic Recommendations** - Next steps for content strategy
           
-          Use proper Markdown formatting with headers, lists, and emphasis. Write in ${language} language.
+          Use proper Markdown formatting with headers, lists, and emphasis. Write exclusively in ${targetLanguage}.
           Focus on actionable insights for content creation and SEO strategy.
         `
       }
