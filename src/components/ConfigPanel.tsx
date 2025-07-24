@@ -10,6 +10,7 @@ interface ConfigPanelProps {
   onConfigChange: (config: AppConfig) => void;
   onApiKeysChange: (keys: ApiKeys) => void;
   onGenerate: () => void;
+  onStop: () => void;
   isProcessing: boolean;
 }
 
@@ -288,7 +289,7 @@ export function ConfigPanel({
                   <input
                     type="range"
                     min="1"
-                    max="5"
+                    max="10"
                     value={config.autoConfig.queryExpansionCount}
                     onChange={(e) => handleConfigChange({
                       autoConfig: { ...config.autoConfig, queryExpansionCount: parseInt(e.target.value) }
@@ -320,7 +321,7 @@ export function ConfigPanel({
                   <input
                     type="range"
                     min="1"
-                    max="3"
+                    max="10"
                     value={config.autoConfig.serpExplorationDepth}
                     onChange={(e) => handleConfigChange({
                       autoConfig: { ...config.autoConfig, serpExplorationDepth: parseInt(e.target.value) }
@@ -425,20 +426,28 @@ export function ConfigPanel({
 
         {/* Generate Button */}
         <div className="pt-4">
-          <button
-            onClick={onGenerate}
-            disabled={!canGenerate() || isProcessing}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center space-x-2 ${
-              canGenerate() && !isProcessing
-                ? 'bg-indigo-600 hover:bg-indigo-700 transform hover:scale-105 shadow-lg hover:shadow-xl'
-                : 'bg-gray-400 cursor-not-allowed'
-            }`}
-          >
-            <Brain className="w-5 h-5" />
-            <span>
-              {isProcessing ? 'PRZETWARZANIE...' : 'GENERUJ MAPĘ TEMATYCZNĄ'}
-            </span>
-          </button>
+          {!isProcessing ? (
+            <button
+              onClick={onGenerate}
+              disabled={!canGenerate()}
+              className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all duration-200 flex items-center justify-center space-x-2 ${
+                canGenerate()
+                  ? 'bg-indigo-600 hover:bg-indigo-700 transform hover:scale-105 shadow-lg hover:shadow-xl'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <Brain className="w-5 h-5" />
+              <span>GENERUJ MAPĘ TEMATYCZNĄ</span>
+            </button>
+          ) : (
+            <button
+              onClick={onStop}
+              className="w-full py-3 px-4 rounded-lg font-semibold text-white bg-red-600 hover:bg-red-700 transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <Brain className="w-5 h-5" />
+              <span>ZATRZYMAJ PROCES</span>
+            </button>
+          )}
 
           {!canGenerate() && !isProcessing && (
             <div className="mt-2 text-xs text-red-500 space-y-1">

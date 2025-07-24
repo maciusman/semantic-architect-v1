@@ -36,6 +36,7 @@ function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [results, setResults] = useState<ProcessResults | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCancelled, setIsCancelled] = useState(false);
 
   useEffect(() => {
     // Load saved configuration and API keys
@@ -60,12 +61,13 @@ function App() {
     if (isProcessing) return;
 
     setIsProcessing(true);
+    setIsCancelled(false);
     setResults(null);
     clearLogs();
 
     try {
       const apiService = new ApiService(apiKeys);
-      const processingService = new ProcessingService(apiService, addLog);
+      const processingService = new ProcessingService(apiService, addLog, () => isCancelled);
       
       addLog({
         id: Date.now().toString(),
@@ -89,6 +91,16 @@ function App() {
     }
   };
 
+  const handleStop = () => {
+    setIsCancelled(true);
+    addLog({
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      level: 'WARNING',
+      message: 'Proces zatrzymywany przez użytkownika...'
+    });
+  };
+
   return (
     <div className="h-screen flex bg-gray-50">
       <ConfigPanel
@@ -97,6 +109,7 @@ function App() {
         onConfigChange={setConfig}
         onApiKeysChange={setApiKeys}
         onGenerate={handleGenerate}
+        onStop={handleStop}
         isProcessing={isProcessing}
       />
       

@@ -6,14 +6,16 @@ import { AppConfig, LogEntry, ProcessResults, KnowledgeGraph, KnowledgeGraphNode
 export class ProcessingService {
   private apiService: ApiService;
   private onLog: (log: LogEntry) => void;
+  private isCancelled: () => boolean;
   private logCounter: number = 0;
   
   // Universal token limit for all models - generous but reasonable
   private static readonly UNIVERSAL_MAX_TOKENS = 32000;
 
-  constructor(apiService: ApiService, onLog: (log: LogEntry) => void) {
+  constructor(apiService: ApiService, onLog: (log: LogEntry) => void, isCancelled: () => boolean) {
     this.apiService = apiService;
     this.onLog = onLog;
+    this.isCancelled = isCancelled;
   }
 
   private addLog(level: LogEntry['level'], message: string) {
@@ -148,6 +150,11 @@ export class ProcessingService {
     const processedQueries = new Set<string>();
 
     for (let currentRound = 1; currentRound <= config.autoConfig.serpExplorationDepth; currentRound++) {
+      if (this.isCancelled()) {
+        this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas eksploracji SERP');
+        break;
+      }
+      
       if (queriesToProcess.length === 0) {
         this.addLog('INFO', `Brak nowych zapytań do przetworzenia w rundzie ${currentRound}. Zakończenie eksploracji.`);
         break; // No more queries to process, exit loop
@@ -159,6 +166,11 @@ export class ProcessingService {
       queriesToProcess = []; // Clear for next round's PAA queries
 
       for (const query of queriesForThisRound) {
+        if (this.isCancelled()) {
+          this.addLog('WARNING', 'Proces zatrzymany przez użytkownika');
+          break;
+        }
+        
         if (processedQueries.has(query)) {
           continue; // Skip already processed queries
         }
@@ -246,6 +258,11 @@ export class ProcessingService {
     const batchSize = 3; // Process in small batches to avoid overwhelming APIs
     
     for (let i = 0; i < urls.length; i += batchSize) {
+      if (this.isCancelled()) {
+        this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas pobierania treści');
+        break;
+      }
+      
       const batch = urls.slice(i, i + batchSize);
       const batchPromises = batch.map(async (url, index) => {
         try {
@@ -289,6 +306,11 @@ export class ProcessingService {
     const results: KnowledgeGraph[] = [];
     
     for (let i = 0; i < scrapedContent.length; i++) {
+      if (this.isCancelled()) {
+        this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas ekstrakcji grafów');
+        break;
+      }
+      
       const { url, content } = scrapedContent[i];
       
       try {
