@@ -29,10 +29,15 @@ Aplikacja opiera się na czterech filarach nowoczesnego, semantycznego SEO:
 
 ### 2. Jak Działa Aplikacja? Pełny Proces Analityczny
 
-Aplikacja wykonuje złożony, wieloetapowy proces, aby przekształcić jedno zapytanie w kompletną strategię contentową.
+Aplikacja wykonuje złożony, wieloetapowy proces, aby przekształcić jedno zapytanie w kompletną strategię contentową. Nowością jest **inteligentna eksploracja rekursywna** z kontrolą głębokości analizy.
 
 1.  **Pozyskiwanie Adresów URL:** W zależności od wybranego trybu, aplikacja:
-    *   **Automatycznie:** Wykonuje rozszerzenie zapytania (Query Expansion), a następnie odpytuje SerpData.io dla kilku najważniejszych zapytań, aby zebrać zróżnicowaną listę czołowych adresów URL.
+    *   **Automatycznie (NOWOŚĆ - Inteligentna Eksploracja):** 
+        - Wykonuje zaawansowane **Query Expansion** generując 1-10 hierarchicznych zapytań na podstawie Centralnej Encji
+        - Przeprowadza **rekursywną eksplorację SERP** na zadaną głębokość (1-10 dodatkowych rund)
+        - W każdej rundzie analizuje sekcje "People Also Ask" i "Related Searches" z Google
+        - **Inteligentnie wybiera** najbardziej trafne zapytanie do następnej rundy za pomocą AI
+        - Zbiera zróżnicowaną listę czołowych adresów URL z wielu perspektyw tematu
     *   **Manualnie:** Pracuje na liście adresów URL wklejonej bezpośrednio przez użytkownika.
 2.  **Pobieranie Treści (Jina AI):** Każdy z zebranych adresów URL jest przetwarzany przez Jina AI w celu pobrania czystej treści strony w formacie Markdown.
 3.  **Inteligentne Czyszczenie Treści (MarkdownCleaner):** Surowa treść jest następnie filtrowana. Aplikacja inteligentnie ekstrahuje **tylko te fragmenty, które znajdują się pod nagłówkami H1, H2 i H3**. Mechanizm poprawnie rozpoznaje obie składnie Markdown (Atx: `# H1` oraz Setext: `H1 \n ===`). Ten kluczowy krok eliminuje szum informacyjny ze stopek, menu, paneli bocznych i sekcji cookies.
@@ -40,6 +45,11 @@ Aplikacja wykonuje złożony, wieloetapowy proces, aby przekształcić jedno zap
 5.  **Filtrowanie Grafu (GraphCleaner):** Każdy wygenerowany fragment grafu jest następnie przepuszczany przez programowy filtr, który usuwa resztki szumu – encje techniczne (np. `Cookie`), nawigacyjne (np. `Zaloguj się`) i nieistotne z punktu widzenia biznesowego (np. `Amazon`, `Google` jako dostawcy usług).
 6.  **Konsolidacja Danych:** Wszystkie **oczyszczone** fragmenty grafów są łączone w jeden, duży, spójny graf wiedzy dla całego analizowanego tematu. Duplikaty węzłów i krawędzi są usuwane.
 7.  **Generowanie Raportu Strategicznego:** Finalny, czysty graf jest przesyłany do modelu językowego wraz z kontekstem biznesowym użytkownika. Na tej podstawie AI generuje kompletną mapę tematyczną w formie strategicznego raportu.
+
+#### **NOWOŚĆ: Kontrola Procesu w Czasie Rzeczywistym**
+- **Przycisk Zatrzymania:** Możliwość anulowania procesu w dowolnym momencie
+- **Punkty Kontrolne:** Aplikacja sprawdza status anulowania na każdym etapie
+- **Bezpieczne Zatrzymanie:** Proces zatrzymuje się elegancko, zachowując już przetworzone dane
 
 ---
 
@@ -86,7 +96,12 @@ Każda analiza wymaga zdefiniowania kluczowych parametrów w panelu konfiguracji
     *   **Automatyczna (zalecane):** Wpisz główne zapytanie i dostosuj suwaki, aby określić głębokość analizy.
     *   **Manualna:** Wklej listę adresów URL, które chcesz przeanalizować.
 4.  **Wybierz modele AI:** Z list rozwijanych wybierz modele, których chcesz użyć do ekstrakcji (szybszy i tańszy) oraz syntezy (inteligentniejszy).
-5.  Kliknij **"GENERUJ MAPĘ TEMATYCZNĄ"**.
+5.  **Dostosuj parametry eksploracji:**
+    *   **Liczba głównych zapytań (1-10):** Kontroluje szerokość początkowej analizy
+    *   **Liczba URL-i na zapytanie (3-10):** Głębokość analizy każdego zapytania
+    *   **Liczba dodatkowych eksploracji SERP (1-10):** Ile rund rekursywnej eksploracji ma wykonać
+6.  Kliknij **"GENERUJ MAPĘ TEMATYCZNĄ"**.
+7.  **W razie potrzeby zatrzymania:** Użyj przycisku **"ZATRZYMAJ PROCES"** który pojawi się podczas przetwarzania.
 6.  **Obserwuj postęp** w panelu Dziennika Procesu. Analiza może potrwać od kilku do kilkunastu minut, w zależności od liczby analizowanych stron.
 7.  Po zakończeniu procesu, w prawym panelu pojawi się **podgląd mapy tematycznej**, a przyciski eksportu staną się aktywne.
 
@@ -127,36 +142,48 @@ Po zakończeniu analizy aplikacja pozwala na eksport czterech kluczowych plików
 
 ### 7.Zaawansowane Sterowanie Analizą: Rola i Optymalizacja `Query Expansion`
 
-Jednym z głównych mechanizmów w **Semantic Architect V-Lite**, jest etap **Query Expansion**. To nie jest prosty generator słów kluczowych – to inteligentny proces, który nadaje kierunek i zakres całej dalszej analizie. Zrozumienie, jak on działa i jak nim sterować, jest kluczem do uzyskania precyzyjnych i strategicznie wartościowych wyników.
+Jednym z głównych mechanizmów w **Semantic Architect V-Lite** jest etap **Query Expansion** oraz **Inteligentna Eksploracja SERP**. To nie jest prosty generator słów kluczowych – to zaawansowany system dwuetapowy, który nadaje kierunek i zakres całej dalszej analizie.
 
-#### Jak Działa Query Expansion?
+#### Jak Działa Query Expansion i Inteligentna Eksploracja?
 
-Gdy podajesz **"Centralną Encję"** (np. `Endodoncja`), aplikacja nie analizuje wyników wyszukiwania tylko dla tego jednego hasła. Byłoby to zbyt wąskie i nie oddałoby złożoności tematu. Zamiast tego, uruchamiany jest proces Query Expansion, który:
+**ETAP 1: Query Expansion (Rozszerzanie Zapytań)**
+Gdy podajesz **"Centralną Encję"** (np. `Endodoncja`), aplikacja nie analizuje wyników wyszukiwania tylko dla tego jednego hasła. Zamiast tego, uruchamiany jest proces Query Expansion, który:
 
 1.  **Wysyła zapytanie do zaawansowanego modelu AI**, instruując go, aby wcielił się w rolę eksperta SEO i stratega contentu.
-2.  Model, bazując na **Centralnej Encji** oraz, co najważniejsze, na Twoim **Kontekście Biznesowym**, generuje listę **zróżnicowanych i trafnych zapytań**.
+2.  Model, bazując na **Centralnej Encji** oraz na Twoim **Kontekście Biznesowym**, generuje **hierarchiczną strukturę zapytań** (1-10 głównych koncepcji z podkategoriami).
 3.  Proces ten uwzględnia:
     *   **Różne perspektywy** i aspekty tematu.
     *   **Wariacje intencji użytkownika** (pytania informacyjne, komercyjne, porównawcze).
     *   **Powiązane podtematy** i kategorie.
     *   **Szczegółowe zapytania** typu "długi ogon".
 
-W ten sposób, zamiast analizować jeden punkt, aplikacja tworzy siatkę punktów startowych, która pozwala na zbudowanie znacznie bogatszego i bardziej reprezentatywnego obrazu "konsensusu Google".
+**ETAP 2: Inteligentna Eksploracja SERP (NOWOŚĆ)**
+Aplikacja nie zatrzymuje się na zapytaniach z Query Expansion. Uruchamia **rekursywną eksplorację**, która:
+
+1.  **Analizuje sekcje "People Also Ask" i "Related Searches"** w wynikach Google dla każdego zapytania
+2.  **Ocenia trafność odkrytych zapytań** używając AI do scoringu relevancji (0.0-1.0)
+3.  **Wybiera najbardziej trafne zapytanie** i dodaje je do kolejnej rundy eksploracji
+4.  **Powtarza proces** na zadaną głębokość (1-10 dodatkowych rund)
+
+W ten sposób aplikacja prowadzi **inteligentne "dochodzenie"** w temacie, odkrywając coraz bardziej niszowe i wartościowe aspekty.
 
 #### Czy Ten Proces Jest Losowy?
 
-**Nie. Jest to kontrolowany proces kreatywny, a Ty jesteś jego reżyserem.** "Losowość" w tym kontekście to kreatywność modelu językowego, którą precyzyjnie sterujesz za pomocą danych wejściowych w panelu konfiguracji.
+**Nie. Jest to precyzyjnie kontrolowany proces analityczny.** Aplikacja podejmuje **świadome decyzje** o kierunku eksploracji na podstawie:
+- Oceny semantycznej trafności zapytań przez AI
+- Kontekstu biznesowego podanego przez użytkownika  
+- Hierarchicznej struktury generowanych zapytań
 
-#### Jak Mieć Wpływ na Wyniki Query Expansion?
+#### Jak Kontrolować Wyniki Eksploracji?
 
-Masz do dyspozycji trzy potężne "dźwignie", które pozwalają precyzyjnie kształtować wyniki tego etapu:
+Masz do dyspozycji pięć potężnych "dźwigni", które pozwalają precyzyjnie kształtować wyniki eksploracji:
 
 **1. Precyzja `Centralnej Encji / Tematu`**
 To Twoje główne narzędzie do określania zakresu.
 *   **Szeroka encja (np. `Endodoncja`):** Skutkuje wygenerowaniem ogólnych zapytań, które pokryją całą dziedzinę. Idealne do tworzenia kompleksowych map dla dużych sekcji serwisu.
 *   **Wąska encja (np. `Maszynowe pilniki niklowo-tytanowe`):** Spowoduje wygenerowanie bardzo specyficznych zapytań, skupionych na konkretnym produkcie, jego zastosowaniach, porównaniach i problemach użytkowników. Idealne do analizy niszowej.
 
-**2. Jakość `Kontekstu Biznesowego` **
+**2. Jakość `Kontekstu Biznesowego`**
 To jest najważniejsze pole do kontrolowania trafności zapytań. Zamiast ogólnego opisu firmy, użyj precyzyjnych, instrukcyjnych dyrektyw.
 *   **Przykład słabego kontekstu:** *"Jesteśmy firmą stomatologiczną."* (Wyniki będą ogólne).
 *   **Przykład mocnego, instrukcyjnego kontekstu:**
@@ -164,16 +191,38 @@ To jest najważniejsze pole do kontrolowania trafności zapytań. Zamiast ogóln
     
     Taki kontekst sprawia, że model priorytetowo traktuje zapytania istotne z punktu widzenia **producenta narzędzi**, a nie pacjenta czy studenta.
 
-**3. `Liczba głównych zapytań do analizy`**
-To prosta, ale skuteczna kontrola nad głębokością i czasem trwania analizy.
-*   **Mniejsza liczba (np. 1-3):** Szybsza, bardziej skoncentrowana analiza, idealna do szybkiego przeglądu tematu.
-*   **Większa liczba (np. 4-5):** Dłuższa, ale znacznie szersza i bardziej dogłębna analiza, która pozwoli odkryć więcej nisz i luk w treści.
+**3. `Liczba głównych zapytań (1-10)`**
+Kontroluje **szerokość** początkowej analizy.
+*   **Mniejsza liczba (1-3):** Skoncentrowana analiza wokół kilku głównych koncepcji
+*   **Większa liczba (7-10):** Bardzo szeroka analiza pokrywająca wiele aspektów tematu
 
-Używając tych trzech narzędzi świadomie, masz pełną kontrolę nad pierwszym, fundamentalnym krokiem procesu. Dzięki temu zapewniasz, że cała moc obliczeniowa aplikacji zostanie skierowana na analizę tych aspektów tematu, które są najważniejsze dla osiągnięcia Twoich celów biznesowych.
+**4. `Liczba URL-i na zapytanie (3-10)`**
+Kontroluje **głębokość** analizy każdego zapytania.
+*   **Mniejsza liczba (3-5):** Analiza tylko czołówki wyników Google
+*   **Większa liczba (8-10):** Głębsza analiza obejmująca więcej perspektyw dla każdego zapytania
+
+**5. `Liczba dodatkowych eksploracji SERP (1-10)` (NOWOŚĆ)**
+Kontroluje **rekursywną głębokość** eksploracji.
+*   **Mniejsza liczba (1-2):** Szybka eksploracja najbliższych tematów powiązanych
+*   **Większa liczba (5-10):** Głęboka eksploracja prowadząca do odkrycia niszowych, długoogonowych zapytań
+
+**6. Kontrola Procesu w Czasie Rzeczywistym (NOWOŚĆ)**
+*   **Przycisk "ZATRZYMAJ PROCES":** Możliwość anulowania w dowolnym momencie
+*   **Logi w czasie rzeczywistym:** Pełna transparentność postępu analizy
+*   **Punkty kontrolne:** Aplikacja sprawdza status anulowania na każdym etapie
+
+Używając tych narzędzi świadomie, masz pełną kontrolę nad całym procesem eksploracji. Dzięki temu zapewniasz, że cała moc obliczeniowa aplikacji zostanie skierowana na analizę tych aspektów tematu, które są najważniejsze dla osiągnięcia Twoich celów biznesowych.</action>
 
 ### 8. Rozwiązywanie Problemów i Dobre Praktyki
 
 *   **Proces trwa bardzo długo:** To normalne. Aplikacja wykonuje dziesiątki, a czasem setki zapytań do zewnętrznych API. Bądź cierpliwy i obserwuj logi postępu.
+    - **NOWOŚĆ:** Możesz teraz zatrzymać proces w dowolnym momencie przyciskiem "ZATRZYMAJ PROCES"
+    - Zalecane: Testuj najpierw z niższymi parametrami (2-3 główne zapytania, 1-2 eksploracje)
 *   **Otrzymuję błędy API:** Najpierw sprawdź, czy Twoje klucze API są poprawnie wklejone i aktywne. Następnie sprawdź swoje limity użycia w panelach poszczególnych usług.
 *   **Wyniki są niskiej jakości:** Najczęstszą przyczyną jest zbyt ogólny **Kontekst Biznesowy**. Wróć do szablonu i stwórz bardziej precyzyjną, instrukcyjną definicję. Rozważ też zmianę źródłowych adresów URL.
-*   **Dobra praktyka:** Zawsze zaczynaj od mniejszej liczby URL-i (np. 5-7), aby szybko przetestować konfigurację. Gdy będziesz zadowolony z kierunku, uruchom pełną analizę na większej liczbie stron.
+*   **Eksploracja SERP nie znajduje nowych zapytań:** Sprawdź, czy Twoja "Centralna Encja" jest wystarczająco popularna w Google. Zbyt niszowe tematy mogą nie mieć sekcji "People Also Ask" lub "Related Searches".
+*   **Proces się zatrzymuje przedwcześnie:** Aplikacja automatycznie kończy eksplorację, gdy nie znajduje nowych, trafnych zapytań (wynik relevancji < 0.3). To normalne zachowanie chroniące przed analizą nierelewantnych treści.
+*   **Dobre praktyki startowe:** 
+    - Zacznij z parametrami: 2-3 główne zapytania, 5 URL-i na zapytanie, 1-2 eksploracje SERP
+    - Gdy będziesz zadowolony z kierunku, zwiększ parametry dla pełnej analizy
+    - Monitoruj logi w czasie rzeczywistym, aby zrozumieć jak przebiega proces</action>
