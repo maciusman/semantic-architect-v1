@@ -120,7 +120,11 @@ export class ProcessingService {
       };
     } catch (error) {
       this.addLog('ERROR', `Błąd podczas przetwarzania: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
-      throw error;
+      if (error instanceof Error && error.message === 'Process cancelled by user') {
+        this.addLog('INFO', 'Proces został anulowany przez użytkownika.');
+      } else {
+        throw error; // Rethrow other errors
+      }
     }
   }
 
@@ -152,7 +156,7 @@ export class ProcessingService {
     for (let currentRound = 1; currentRound <= config.autoConfig.serpExplorationDepth; currentRound++) {
       if (this.isCancelled()) {
         this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas eksploracji SERP');
-        break;
+        throw new Error('Process cancelled by user');
       }
       
       if (queriesToProcess.length === 0) {
@@ -168,7 +172,7 @@ export class ProcessingService {
       for (const query of queriesForThisRound) {
         if (this.isCancelled()) {
           this.addLog('WARNING', 'Proces zatrzymany przez użytkownika');
-          break;
+          throw new Error('Process cancelled by user');
         }
         
         if (processedQueries.has(query)) {
@@ -260,7 +264,7 @@ export class ProcessingService {
     for (let i = 0; i < urls.length; i += batchSize) {
       if (this.isCancelled()) {
         this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas pobierania treści');
-        break;
+        throw new Error('Process cancelled by user');
       }
       
       const batch = urls.slice(i, i + batchSize);
@@ -308,7 +312,7 @@ export class ProcessingService {
     for (let i = 0; i < scrapedContent.length; i++) {
       if (this.isCancelled()) {
         this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas ekstrakcji grafów');
-        break;
+        throw new Error('Process cancelled by user');
       }
       
       const { url, content } = scrapedContent[i];
