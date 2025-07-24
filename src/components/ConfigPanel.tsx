@@ -11,6 +11,7 @@ interface ConfigPanelProps {
   onApiKeysChange: (keys: ApiKeys) => void;
   onGenerate: () => void;
   onStop: () => void;
+  onStop: () => void;
   isProcessing: boolean;
 }
 
@@ -20,6 +21,7 @@ export function ConfigPanel({
   onConfigChange,
   onApiKeysChange,
   onGenerate,
+  onStop,
   isProcessing
 }: ConfigPanelProps) {
   const [showApiKeys, setShowApiKeys] = useState(false);
