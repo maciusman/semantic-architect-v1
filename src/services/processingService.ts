@@ -27,6 +27,22 @@ export class ProcessingService {
   }
 
   /**
+   * Parses a Markdown nested list into a flat array of unique queries.
+   * Handles both top-level and sub-level list items.
+   */
+  private parseMarkdownQueryList(markdown: string): string[] {
+    const queries: string[] = [];
+    const lines = markdown.split('\n');
+    lines.forEach(line => {
+      const match = line.match(/^-+\s*(.+)/); // Matches "- Query" or "  - Query"
+      if (match && match[1]) {
+        queries.push(match[1].trim());
+      }
+    });
+    return [...new Set(queries)]; // Return unique queries
+  }
+
+  /**
    * Truncate content based on estimated token count
    * Using rough estimation: 1 token ≈ 0.75 words ≈ 4 characters
    */
@@ -116,48 +132,66 @@ export class ProcessingService {
 
     // Query expansion
     this.addLog('INFO', `Generowanie ${config.autoConfig.queryExpansionCount} zapytań na podstawie "${config.project.centralEntity}"`);
-    const queries = await this.apiService.performQueryExpansion(
+    const rawQueriesMarkdown = await this.apiService.performQueryExpansion(
       config.project.centralEntity,
       config.project.businessContext,
       config.project.language,
       config.autoConfig.queryExpansionCount,
       config.models.extractionModel
     );
+    const initialQueries = this.parseMarkdownQueryList(rawQueriesMarkdown);
 
-    this.addLog('SUCCESS', `Wygenerowano zapytania: ${queries.join(', ')}`);
+    this.addLog('SUCCESS', `Wygenerowano ${initialQueries.length} początkowych zapytań.`);
 
-    // Filter out empty or whitespace-only queries
-    const validQueries = queries.filter(query => query && query.trim().length > 0);
-    
-    if (validQueries.length === 0) {
-      this.addLog('WARNING', 'Wszystkie wygenerowane zapytania są puste - brak URL-i do pobrania');
-      return [];
-    }
-    
-    if (validQueries.length < queries.length) {
-      this.addLog('WARNING', `Odfiltrowano ${queries.length - validQueries.length} pustych zapytań`);
-    }
-    // Multi-SERP analysis
     const allUrls: string[] = [];
-    for (const query of validQueries) {
-      this.addLog('INFO', `Wyszukiwanie URL-i dla zapytania: "${query}"`);
+    const queriesToProcess = [...initialQueries];
+    const processedQueries = new Set<string>();
+    let currentDepth = 0;
+
+    while (queriesToProcess.length > 0 && currentDepth < config.autoConfig.serpExplorationDepth) {
+      currentDepth++;
+      this.addLog('INFO', `Rozpoczynanie rundy eksploracji SERP (głębokość ${currentDepth}/${config.autoConfig.serpExplorationDepth})...`);
       
-      try {
-        const results = await this.apiService.searchSerp(
-          query,
-          config.project.language,
-          config.project.location,
-          config.autoConfig.urlsPerQuery
-        );
+      const queriesInThisRound = [...queriesToProcess]; // Process queries currently in queue
+      queriesToProcess.length = 0; // Clear queue for next round's PAA
+
+      for (const query of queriesInThisRound) {
+        if (processedQueries.has(query)) {
+          continue; // Skip already processed queries
+        }
+        processedQueries.add(query);
+
+        this.addLog('INFO', `Wyszukiwanie URL-i dla zapytania: "${query}"`);
         
-        const urls = results.map(r => r.url);
-        allUrls.push(...urls);
-        this.addLog('INFO', `Znaleziono ${urls.length} URL-i dla "${query}" (z ${results.length} wyników)`);
-        
-        // Small delay to be respectful to the API
-        await this.delay(500);
-      } catch (error) {
-        this.addLog('WARNING', `Błąd wyszukiwania dla "${query}": ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+        try {
+          const results = await this.apiService.searchSerp(
+            query,
+            config.project.language,
+            config.project.location,
+            config.autoConfig.urlsPerQuery
+          );
+          
+          const urls = results.map(r => r.link);
+          allUrls.push(...urls);
+          this.addLog('INFO', `Znaleziono ${urls.length} URL-i dla "${query}"`);
+          
+          // Extract PAA questions and add to queue for next round
+          results.forEach(result => {
+            if (result.paaQuestions) {
+              result.paaQuestions.forEach(paaQuery => {
+                if (!processedQueries.has(paaQuery) && !queriesToProcess.includes(paaQuery)) {
+                  queriesToProcess.push(paaQuery);
+                  this.addLog('INFO', `Dodano nowe zapytanie PAA do kolejki: "${paaQuery}"`);
+                }
+              });
+            }
+          });
+          
+          // Small delay to be respectful to the API
+          await this.delay(500);
+        } catch (error) {
+          this.addLog('WARNING', `Błąd wyszukiwania dla "${query}": ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+        }
       }
     }
 

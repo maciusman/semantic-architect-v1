@@ -69,6 +69,7 @@ export interface SerpResult {
   title: string;
   link: string;
   snippet: string;
+  paaQuestions?: string[]; // Added for People Also Ask questions
 }
 
 export interface KnowledgeGraphNode {

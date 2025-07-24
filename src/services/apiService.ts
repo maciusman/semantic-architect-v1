@@ -105,17 +105,27 @@ export class ApiService {
       {
         role: 'user',
         content: `
-          Central Entity: "${centralEntity}"
-          Business Context: "${businessContext}"
-          Language: ${language}
-          
-          Generate exactly ${count} diverse, relevant search queries that would help understand this topic comprehensively. Consider:
-          - Different aspects and perspectives
-          - User intent variations (informational, commercial, navigational)
-          - Related subtopics and categories
-          - Long-tail variations
-          
-          Respond with ONLY the queries, one per line, in ${language} language.
+ROLE: You are an expert SEO and content strategist, functioning as a topic exploration engine. Your task is to generate a hierarchical structure of search queries.
+
+Central Entity: "${centralEntity}"
+Business Context: "${businessContext}"
+Target Language: ${language}
+Number of Core Concepts to Generate: ${count} // \`count\` teraz kontroluje liczbę głównych gałęzi
+
+TASK:
+Generate a hierarchical list of diverse search queries that comprehensively cover the topic. Structure your response as a nested list in Markdown format. The structure should be:
+- [Core Concept Query 1 - Broad, foundational query]
+  - [Sub-query 1.1 - More specific, drilling down]
+  - [Sub-query 1.2 - Exploring a different aspect of Core Concept 1]
+- [Core Concept Query 2 - Another broad, foundational query]
+  - [Sub-query 2.1 - Specific question related to Core Concept 2]
+  - [Sub-query 2.2 - Transactional query related to Core Concept 2]
+
+RULES:
+- Generate exactly ${count} top-level "Core Concept Queries".
+- For each Core Concept, generate 2-3 specific "Sub-queries".
+- All queries must be in the ${language} language.
+- Respond with ONLY the Markdown list.
         `
       }
     ];
@@ -160,11 +170,14 @@ export class ApiService {
       // Debug: log the response structure
       console.log('SerpData API Response:', JSON.stringify(data, null, 2));
       
-      // Extract results from the correct nested structure
+      // Extract organic results
       const results = data.data?.data?.results?.organic_results || [];
+      // Extract People Also Ask questions
+      const paaQuestions = data.data?.data?.results?.people_also_ask?.map((item: any) => item.question) || [];
+      
       console.log('Extracted results:', results);
       
-      return results.slice(0, count);
+      return results.slice(0, count).map((r: SerpResult) => ({ ...r, paaQuestions }));
     } catch (error) {
       console.error('Error searching SERP:', error);
       throw error;

@@ -312,6 +312,22 @@ export function ConfigPanel({
                     className="w-full"
                   />
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Głębokość Eksploracji SERP (ilość rund): {config.autoConfig.serpExplorationDepth}
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    value={config.autoConfig.serpExplorationDepth}
+                    onChange={(e) => handleConfigChange({
+                      autoConfig: { ...config.autoConfig, serpExplorationDepth: parseInt(e.target.value) }
+                    })}
+                    className="w-full"
+                  />
+                </div>
               </div>
             ) : (
               <div>
