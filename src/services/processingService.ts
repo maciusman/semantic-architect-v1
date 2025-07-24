@@ -178,17 +178,53 @@ export class ProcessingService {
           allUrls.push(...urls);
           this.addLog('INFO', `Znaleziono ${urls.length} URL-i dla "${query}"`);
 
-          // Extract PAA questions and add to queue for next round
+          // Collect all discovered queries from this SERP round
+          const discoveredQueries: string[] = [];
           results.forEach(result => {
-            if (result.paaQuestions) {
-              result.paaQuestions.forEach(paaQuery => {
-                if (!processedQueries.has(paaQuery) && !queriesToProcess.includes(paaQuery)) { // Check if not already processed or in current queue
-                  queriesToProcess.push(paaQuery);
-                  this.addLog('INFO', `Dodano nowe zapytanie PAA do kolejki dla następnej rundy: "${paaQuery}"`);
+            if (result.additionalQueries) {
+              result.additionalQueries.forEach(discoveredQuery => {
+                if (!processedQueries.has(discoveredQuery) && !discoveredQueries.includes(discoveredQuery)) {
+                  discoveredQueries.push(discoveredQuery);
                 }
               });
             }
           });
+          
+          // If we have discovered queries and this is not the last round, select the best one
+          if (discoveredQueries.length > 0 && currentRound < config.autoConfig.serpExplorationDepth) {
+            this.addLog('INFO', `Znaleziono ${discoveredQueries.length} potencjalnych zapytań do następnej rundy. Wybieranie najbardziej trafnego...`);
+            
+            // Score all discovered queries for relevance
+            const scoredQueries: Array<{ query: string; score: number }> = [];
+            
+            for (const discoveredQuery of discoveredQueries) {
+              try {
+                const score = await this.apiService.scoreQueryRelevance(
+                  discoveredQuery,
+                  config.project.centralEntity,
+                  config.models.extractionModel
+                );
+                scoredQueries.push({ query: discoveredQuery, score });
+                this.addLog('INFO', `Zapytanie "${discoveredQuery}" otrzymało ocenę trafności: ${score.toFixed(2)}`);
+              } catch (error) {
+                this.addLog('WARNING', `Błąd oceny zapytania "${discoveredQuery}": ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
+              }
+            }
+            
+            // Select the highest scoring query
+            if (scoredQueries.length > 0) {
+              const bestQuery = scoredQueries.reduce((best, current) => 
+                current.score > best.score ? current : best
+              );
+              
+              if (bestQuery.score > 0.3) { // Only add if relevance is reasonable
+                queriesToProcess.push(bestQuery.query);
+                this.addLog('SUCCESS', `Wybrano najlepsze zapytanie dla rundy ${currentRound + 1}: "${bestQuery.query}" (trafność: ${bestQuery.score.toFixed(2)})`);
+              } else {
+                this.addLog('INFO', `Najlepsze zapytanie "${bestQuery.query}" ma zbyt niską trafność (${bestQuery.score.toFixed(2)}). Pomijanie.`);
+              }
+            }
+          }
 
           // Small delay to be respectful to the API
           await this.delay(500);

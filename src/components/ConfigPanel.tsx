@@ -315,7 +315,7 @@ export function ConfigPanel({
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Głębokość Eksploracji SERP (ilość rund): {config.autoConfig.serpExplorationDepth}
+                    Liczba Dodatkowych Eksploracji SERP: {config.autoConfig.serpExplorationDepth}
                   </label>
                   <input
                     type="range"

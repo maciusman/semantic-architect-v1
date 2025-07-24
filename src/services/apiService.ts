@@ -172,11 +172,21 @@ RULES:
       
       // Extract organic results
       const organicResults = data.data?.data?.results?.organic_results || [];
-      // Extract People Also Ask questions
-      const paaQuestions = data.data?.data?.results?.people_also_ask?.map((item: any) => item.question) || [];
+      
+      // Extract additional queries from multiple sources
+      const additionalQueries: string[] = [];
+      
+      // Source 1: People Also Ask questions
+      const paaQuestions = data.data?.data?.results?.snippets_data?.people_also_ask?.questions || 
+                          data.data?.data?.results?.people_also_ask?.map((item: any) => item.question) || [];
+      additionalQueries.push(...paaQuestions);
+      
+      // Source 2: Related Searches
+      const relatedSearches = data.data?.data?.results?.snippets_data?.related_searches?.queries || [];
+      additionalQueries.push(...relatedSearches);
       
       console.log('Extracted organic results:', organicResults);
-      console.log('Extracted PAA questions:', paaQuestions);
+      console.log('Extracted additional queries from PAA and Related Searches:', additionalQueries);
       
       // Map results with proper validation
       const mappedResults = organicResults.slice(0, count).map((result: any) => ({
@@ -184,7 +194,7 @@ RULES:
         title: result.title || '',
         link: result.link || result.url || '', // Try both 'link' and 'url' fields
         snippet: result.snippet || result.description || '',
-        paaQuestions: paaQuestions // Attach PAA questions to each result
+        additionalQueries: additionalQueries // Attach all additional queries to each result
       })).filter((result: SerpResult) => result.link && result.link.trim() !== ''); // Filter out empty URLs
       
       console.log('Final mapped results:', mappedResults);
@@ -404,5 +414,30 @@ Ensure that the entire report, including all headers, subtopics, analysis, and s
       console.warn(`Knowledge graph JSON is very large (${graphJsonString.length} characters). This might exceed the AI model's context window and cause errors.`);
     }
     return await this.queryOpenRouter(model, messages, 0.7);
+  }
+
+  async scoreQueryRelevance(query: string, centralEntity: string, model: string): Promise<number> {
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a semantic relevance scoring system. Rate query relevance to a core topic and respond with ONLY a number between 0.0 and 1.0.'
+      },
+      {
+        role: 'user',
+        content: `Rate the semantic relevance of the following QUERY to the CORE TOPIC on a scale from 0.0 to 1.0. Respond with ONLY the number.
+
+CORE TOPIC: "${centralEntity}"
+QUERY: "${query}"`
+      }
+    ];
+
+    try {
+      const response = await this.queryOpenRouter(model, messages, 0.1);
+      const score = parseFloat(response.trim());
+      return isNaN(score) ? 0.0 : Math.max(0.0, Math.min(1.0, score));
+    } catch (error) {
+      console.error('Error scoring query relevance:', error);
+      return 0.0;
+    }
   }
 }
