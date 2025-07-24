@@ -55,6 +55,12 @@ W sekcji ustawień aplikacji (`Ustawienia API`) należy podać trzy klucze API:
 
 Klucze są przechowywane bezpiecznie na Twoim lokalnym komputerze i nie są nigdzie wysyłane.
 
+#### Standardowe uruchamianie projektu lokalnie
+*   Zainstaluj Node.js (jeśli jeszcze nie masz).
+*   Wejdź do folderu projektu w terminalu.
+*   Zainstaluj zależności: **npm install**
+*   Uruchom aplikację developersko: **npm run dev**
+
 #### Ustawienia Projektu
 Każda analiza wymaga zdefiniowania kluczowych parametrów w panelu konfiguracji.
 
