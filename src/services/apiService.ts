@@ -131,7 +131,7 @@ RULES:
     ];
 
     const response = await this.queryOpenRouter(model, messages);
-    return response.split('\n').filter(line => line.trim()).slice(0, count);
+    return response;
   }
 
   async searchSerp(query: string, language: string, location: string, count: number): Promise<SerpResult[]> {
