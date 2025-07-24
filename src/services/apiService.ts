@@ -171,13 +171,25 @@ RULES:
       console.log('SerpData API Response:', JSON.stringify(data, null, 2));
       
       // Extract organic results
-      const results = data.data?.data?.results?.organic_results || [];
+      const organicResults = data.data?.data?.results?.organic_results || [];
       // Extract People Also Ask questions
       const paaQuestions = data.data?.data?.results?.people_also_ask?.map((item: any) => item.question) || [];
       
-      console.log('Extracted results:', results);
+      console.log('Extracted organic results:', organicResults);
+      console.log('Extracted PAA questions:', paaQuestions);
       
-      return results.slice(0, count).map((r: SerpResult) => ({ ...r, paaQuestions }));
+      // Map results with proper validation
+      const mappedResults = organicResults.slice(0, count).map((result: any) => ({
+        position: result.position || 0,
+        title: result.title || '',
+        link: result.link || result.url || '', // Try both 'link' and 'url' fields
+        snippet: result.snippet || result.description || '',
+        paaQuestions: paaQuestions // Attach PAA questions to each result
+      })).filter((result: SerpResult) => result.link && result.link.trim() !== ''); // Filter out empty URLs
+      
+      console.log('Final mapped results:', mappedResults);
+      
+      return mappedResults;</action>
     } catch (error) {
       console.error('Error searching SERP:', error);
       throw error;
