@@ -1,3 +1,35 @@
+}</parameter>
+  };
+    processedUrls?: number;
+    totalUrls?: number;
+    executionTime: number;
+  metadata: {
+  };
+    topicalMap?: string;
+    consolidatedGraph?: KnowledgeGraph;
+    knowledgeFragments?: KnowledgeGraph[];
+    scrapedContent?: Array<{ url: string; content: string }>;
+    urls?: string[];
+  progress: {
+  error?: string;
+  updatedAt: Date;
+  createdAt: Date;
+  currentStep: 'urls' | 'content' | 'fragments' | 'consolidation' | 'synthesis' | 'completed';
+  status: 'running' | 'paused' | 'completed' | 'error' | 'cancelled';
+  config: AppConfig;
+  name: string;
+  id: string;
+export interface SessionState {
+
+}
+  topicalMap?: string;
+  consolidatedGraph?: KnowledgeGraph;
+  knowledgeFragments?: KnowledgeGraph[];
+  scrapedContent?: Array<{ url: string; content: string }>;
+  urls?: string[];
+  config?: AppConfig;
+export interface SessionCheckpoint {
+
 export interface ApiKeys {
   openrouter: string;
   jina: string;
