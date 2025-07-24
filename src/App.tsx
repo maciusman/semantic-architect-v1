@@ -45,7 +45,30 @@ function App() {
     
     setApiKeys(savedKeys);
     if (savedConfig) {
-      setConfig(prev => ({ ...prev, ...savedConfig }));
+      setConfig(prev => ({
+        ...prev,
+        ...savedConfig,
+        project: {
+          ...prev.project,
+          ...savedConfig.project,
+        },
+        autoConfig: {
+          ...prev.autoConfig,
+          ...savedConfig.autoConfig,
+          // Ensure these are numbers, falling back to default if saved is null/undefined
+          queryExpansionCount: savedConfig.autoConfig?.queryExpansionCount ?? prev.autoConfig.queryExpansionCount,
+          urlsPerQuery: savedConfig.autoConfig?.urlsPerQuery ?? prev.autoConfig.urlsPerQuery,
+          serpExplorationDepth: savedConfig.autoConfig?.serpExplorationDepth ?? prev.autoConfig.serpExplorationDepth,
+        },
+        manualConfig: {
+          ...prev.manualConfig,
+          ...savedConfig.manualConfig,
+        },
+        models: {
+          ...prev.models,
+          ...savedConfig.models,
+        },
+      }));
     }
   }, []);
 
