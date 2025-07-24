@@ -7,6 +7,9 @@ export class ProcessingService {
   private apiService: ApiService;
   private onLog: (log: LogEntry) => void;
   private logCounter: number = 0;
+  
+  // Universal token limit for all models - generous but reasonable
+  private static readonly UNIVERSAL_MAX_TOKENS = 32000;
 
   constructor(apiService: ApiService, onLog: (log: LogEntry) => void) {
     this.apiService = apiService;
@@ -23,6 +26,31 @@ export class ProcessingService {
     });
   }
 
+  /**
+   * Truncate content based on estimated token count
+   * Using rough estimation: 1 token ≈ 0.75 words ≈ 4 characters
+   */
+  private truncateContentByTokens(content: string, maxTokens: number): string {
+    if (!content) return '';
+    
+    // Rough estimation: 1 token ≈ 4 characters for most languages
+    const maxChars = maxTokens * 4;
+    
+    if (content.length <= maxChars) {
+      return content;
+    }
+    
+    // Truncate and add ellipsis
+    const truncated = content.substring(0, maxChars);
+    
+    // Try to cut at a word boundary to avoid cutting words in half
+    const lastSpaceIndex = truncated.lastIndexOf(' ');
+    const finalContent = lastSpaceIndex > maxChars * 0.9 ? 
+      truncated.substring(0, lastSpaceIndex) : 
+      truncated;
+    
+    return finalContent + '...';
+  }
   private async delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
@@ -197,8 +225,15 @@ export class ProcessingService {
         const cleanedContent = cleanMarkdown(content);
         this.addLog('INFO', `Oczyszczono treść dla ${url}: ${content.length} → ${cleanedContent.length} znaków`);
         
-        // Truncate cleaned content if still too long (to avoid token limits)
-        const processedContent = cleanedContent.length > 8000 ? cleanedContent.substring(0, 8000) + '...' : cleanedContent;
+        // Truncate content using universal token limit
+        const processedContent = this.truncateContentByTokens(
+          cleanedContent, 
+          ProcessingService.UNIVERSAL_MAX_TOKENS
+        );
+        
+        if (processedContent !== cleanedContent) {
+          this.addLog('INFO', `Obcięto treść dla ${url} do ${ProcessingService.UNIVERSAL_MAX_TOKENS} tokenów (~${processedContent.length} znaków)`);
+        }
         
         const rawGraph = await this.apiService.extractKnowledgeGraph(
           processedContent,
