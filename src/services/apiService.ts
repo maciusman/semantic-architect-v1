@@ -193,6 +193,7 @@ export class ApiService {
   }
 
   async extractKnowledgeGraph(content: string, centralEntity: string, url: string, model: string, language: string): Promise<KnowledgeGraph> {
+  }
   async extractKnowledgeGraph(
     content: string, 
     centralEntity: string, 
