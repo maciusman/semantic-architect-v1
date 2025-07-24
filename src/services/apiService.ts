@@ -294,27 +294,74 @@ Ensure that the entire report, including all headers, subtopics, analysis, and s
       },
       {
         role: 'user',
-        content: `
-          Create a comprehensive topical map for "${centralEntity}\" based on this knowledge graph.
-          
+        content: `Your task is to act as a world-class SEO Architect and Data Strategist. You will systematically unpack and transform the provided knowledge graph into a massive, deeply detailed, and actionable topical map. The final output must be an exhaustive strategic plan written exclusively in the TARGET LANGUAGE.
+
           Business Context: "${businessContext}"
           Target Language: ${targetLanguage}
           
           Knowledge Graph:
           ${JSON.stringify(consolidatedGraph, null, 2)}
           
-          Create a well-structured topical map in Markdown format that includes:
+          ---
           
-          1. **Executive Summary** - Overview of the topic landscape
-          2. **Core Topic Clusters** - Main thematic groups with subtopics
-          3. **Content Opportunities** - Specific content ideas and angles
-          4. **Semantic Relationships** - How topics connect and relate
-          5. **Content Gap Analysis** - Missing areas to explore
-          6. **Strategic Recommendations** - Next steps for content strategy
-          
-          Use proper Markdown formatting with headers, lists, and emphasis. Write exclusively in ${targetLanguage}.
-          Focus on actionable insights for content creation and SEO strategy.
-        `
+          **OUTPUT STRUCTURE AND INSTRUCTIONS:**
+
+          Create a well-structured topical map in Markdown format. Be exhaustive in each section. Your goal is to generate a plan so detailed that an SEO team can work off it for the next 6-12 months.
+
+          **1. Executive Summary & Strategic Overview**
+          - Briefly summarize the topic landscape based on the graph's density and key clusters.
+          - Identify the primary user intents discovered (transactional, informational).
+          - State the core strategic imperative for the client based on their Business Context and the data.
+
+          **2. Proposed Information Architecture & URL Structure**
+          - Based on the graph's hierarchy, propose a logical site structure.
+          - Start with main categories (e.g., /products/, /knowledge-base/, /pricing/).
+          - Propose sub-category structures and example final URLs based on the graph's nodes.
+          - **Example (language-neutral structure):**
+            - /product-category/[main-product-type]/
+            - /product-category/[main-product-type]/[sub-product-type]/
+            - /knowledge-base/interactive-calculators/
+            - /comparison/[competitor-a]-vs-[competitor-b]/
+
+          **3. Deep Dive: Core Topic Clusters (Pillar & Spoke Model)**
+          - Identify 3-5 of the most important, densely connected clusters from the graph.
+          - For EACH cluster:
+            - **a) Propose a "Pillar Page":** Suggest a comprehensive title and a brief description of its goal.
+            - **b) Detail "Spoke Content":** Systematically list specific nodes from the knowledge graph that should become individual articles or sub-sections supporting the pillar page. For each spoke, provide a suggested title and a one-sentence description of its purpose.
+            - **Example (language-neutral pattern):**
+              - **Pillar Page:** "[Central Topic]: The Complete Guide to [Central Topic]"
+              - **Spoke Content:**
+                - *Node: [Specific Product Type, e.g., "Ketogenic Diet"]*: Proposed Article: "How Our [Specific Product Type] Works: Features & Results". Description: A product-focused landing page detailing this specific offering.
+                - *Node: [Core Concept, e.g., "Ketogenic Diet Principles"]*: Proposed Article: "7 Key Principles of [Core Concept] for Beginners". Description: An educational article explaining the fundamentals.
+                - *... (continue for all relevant nodes)* ...
+
+          **4. Semantic Linking Blueprint (Internal Linking Strategy)**
+          - Analyze the "edges" array in the knowledge graph.
+          - Create a Markdown table that translates the most important relationships into an actionable internal linking plan.
+          - **The table must have these English column headers:** | Page A (Source) | Relation (Context) | Page B (Target) | Suggested Anchor Text |
+          - The content of the table must be in the TARGET LANGUAGE.
+          - **Example (language-neutral pattern):**
+            | Article about "[Specific Topic]" | "is a type of" | Category Page "[Broader Topic]" | "discover all our [Broader Topic] solutions" |
+
+          **5. Granular Content Opportunities & Angle Analysis**
+          - Go beyond generic ideas. Propose at least 10 specific, compelling content titles based on less obvious nodes or combinations of nodes in the graph.
+          - For each idea, specify the recommended content format (e.g., "Listicle", "How-To Guide", "Comparison Article", "Case Study", "Interactive Tool").
+          - **Example (language-neutral pattern):**
+            - **Title:** "[Competitor Brand A] vs. [Competitor Brand B]: Which [Product] is Better for [User Segment]? (A Detailed Comparison)"
+            - **Format:** Comparison Article
+
+          **6. Competitor & Product Entity Analysis**
+          - Extract all nodes from the graph where the "type" is "Company", "Organization", or "Brand" and list them as identified competitors.
+          - Extract key nodes where the "type" is "Product" or a specific product type. For a few key ones, suggest how the client's products can be positioned against them based on their properties in the graph.
+
+          **7. Advanced Content Gap Analysis**
+          - **a) Conceptual Gaps:** Based on your expert knowledge and the provided Business Context, what topics are missing from the entire landscape defined by the graph?
+          - **b) Structural Gaps:** Identify "weakly-connected nodes" within the graph itself – entities that were mentioned but have very few relationships. These represent underdeveloped topics by the competition and are prime opportunities. List at least 5 such nodes and suggest a content piece for each.
+
+          **8. Actionable Strategic Recommendations**
+          - Based on all the analysis above, provide a final, prioritized list of next steps for the SEO and content team.
+          - Be specific. Instead of "improve content," write "Expand the '[Location-Based Page]' to include a local ranking and testimonials from [Location]-based clients."
+          - Structure this as a checklist of 5-7 key actions to take in the next quarter.`
       }
     ];
 
