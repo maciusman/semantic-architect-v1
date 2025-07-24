@@ -189,7 +189,7 @@ RULES:
       
       console.log('Final mapped results:', mappedResults);
       
-      return mappedResults;</action>
+      return mappedResults;
     } catch (error) {
       console.error('Error searching SERP:', error);
       throw error;
