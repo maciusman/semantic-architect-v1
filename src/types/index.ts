@@ -133,8 +133,8 @@ export interface SessionState {
     topicalMap?: string;
   };
   metadata: {
-    processedUrls?: number;
-    totalUrls?: number;
     executionTime: number;
+    totalUrls?: number;
+    processedUrls?: number;
   };
 }

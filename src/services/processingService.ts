@@ -1,21 +1,32 @@
 import { ApiService } from './apiService';
+import { SessionService } from './sessionService';
 import { cleanMarkdown } from '../utils/markdownCleaner';
 import { cleanKnowledgeGraph, getCleaningStats } from '../utils/graphCleaner';
-import { AppConfig, LogEntry, ProcessResults, KnowledgeGraph, KnowledgeGraphNode, KnowledgeGraphEdge } from '../types';
+import { AppConfig, LogEntry, ProcessResults, KnowledgeGraph, KnowledgeGraphNode, KnowledgeGraphEdge, SessionState } from '../types';
 
 export class ProcessingService {
   private apiService: ApiService;
   private onLog: (log: LogEntry) => void;
   private isCancelled: () => boolean;
+  private isPaused: () => boolean;
+  private sessionId?: string;
   private logCounter: number = 0;
   
   // Universal token limit for all models - generous but reasonable
   private static readonly UNIVERSAL_MAX_TOKENS = 32000;
 
-  constructor(apiService: ApiService, onLog: (log: LogEntry) => void, isCancelled: () => boolean) {
+  constructor(
+    apiService: ApiService, 
+    onLog: (log: LogEntry) => void, 
+    isCancelled: () => boolean,
+    isPaused: () => boolean,
+    sessionId?: string
+  ) {
     this.apiService = apiService;
     this.onLog = onLog;
     this.isCancelled = isCancelled;
+    this.isPaused = isPaused;
+    this.sessionId = sessionId;
   }
 
   private addLog(level: LogEntry['level'], message: string) {
@@ -73,38 +84,143 @@ export class ProcessingService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  async processTopicalMap(config: AppConfig): Promise<ProcessResults> {
+  async processTopicalMap(config: AppConfig, resumeSessionId?: string): Promise<ProcessResults> {
     const startTime = Date.now();
-    this.addLog('INFO', 'Rozpoczynanie procesu generowania mapy tematycznej...');
+    let sessionId = resumeSessionId;
+    
 
     try {
-      // Step 1: Get URLs
-      const urls = await this.getUrls(config);
-      this.addLog('SUCCESS', `Pozyskano ${urls.length} unikalnych URL-i do analizy`);
+      // Initialize or resume session
+      if (!sessionId) {
+        sessionId = await SessionService.createSession(config);
+        this.sessionId = sessionId;
+        this.addLog('INFO', `Rozpoczęto nową sesję: ${sessionId}`);
+      } else {
+        this.sessionId = sessionId;
+        const session = await SessionService.getSession(sessionId);
+        if (session) {
+          this.addLog('INFO', `Wznowiono sesję: ${sessionId} (ostatni etap: ${session.currentStep})`);
+          await SessionService.updateSession(sessionId, { status: 'running' });
+        }
+      }
 
-      // Step 2: Scrape content
-      const scrapedContent = await this.scrapeContent(urls);
-      this.addLog('SUCCESS', `Pobrano treść z ${scrapedContent.length}/${urls.length} stron`);
+      // === ETAP 1: POZYSKIWANIE URL-I ===
+      let urls: string[];
+      const existingSession = await SessionService.getSession(sessionId!);
+      
+      if (existingSession?.progress.urls) {
+        urls = existingSession.progress.urls;
+        this.addLog('SUCCESS', `Wznowiono: Wczytano ${urls.length} URL-i z sesji`);
+      } else {
+        if (this.isCancelled()) throw new Error('Proces anulowany przez użytkownika');
+        if (this.isPaused()) {
+          await SessionService.updateSession(sessionId!, { status: 'paused' });
+          throw new Error('Proces zapauzowany przez użytkownika');
+        }
+        
+        urls = await this.getUrls(config);
+        await SessionService.saveCheckpoint(sessionId!, 'urls', urls);
+        await SessionService.updateSession(sessionId!, { 
+          metadata: { ...existingSession?.metadata, totalUrls: urls.length, executionTime: 0 } 
+        });
+        this.addLog('SUCCESS', `Pozyskano ${urls.length} unikalnych URL-i do analizy`);
+      }
 
-      // Step 3: Extract knowledge graphs
-      const knowledgeFragments = await this.extractKnowledgeGraphs(
-        scrapedContent,
-        config.project.centralEntity,
-        config.project.businessContext,
-        config.models.extractionModel,
-        config.project.language
-      );
-      this.addLog('SUCCESS', `Wygenerowano ${knowledgeFragments.length} fragmentów grafu wiedzy`);
+      // === ETAP 2: POBIERANIE TREŚCI ===
+      let scrapedContent: Array<{ url: string; content: string }>;
+      const updatedSession = await SessionService.getSession(sessionId!);
+      
+      if (updatedSession?.progress.scrapedContent) {
+        scrapedContent = updatedSession.progress.scrapedContent;
+        this.addLog('SUCCESS', `Wznowiono: Wczytano treść z ${scrapedContent.length} stron z sesji`);
+      } else {
+        if (this.isCancelled()) throw new Error('Proces anulowany przez użytkownika');
+        if (this.isPaused()) {
+          await SessionService.updateSession(sessionId!, { status: 'paused' });
+          throw new Error('Proces zapauzowany przez użytkownika');
+        }
+        
+        scrapedContent = await this.scrapeContent(urls, sessionId!);
+        await SessionService.saveCheckpoint(sessionId!, 'content', scrapedContent);
+        this.addLog('SUCCESS', `Pobrano treść z ${scrapedContent.length}/${urls.length} stron`);
+      }
 
-      // Step 4: Consolidate knowledge graph
-      const consolidatedGraph = this.consolidateKnowledgeGraph(knowledgeFragments);
-      this.addLog('SUCCESS', `Skonsolidowano graf: ${consolidatedGraph.nodes.length} węzłów, ${consolidatedGraph.edges.length} relacji`);
+      // === ETAP 3: EKSTRAKCJA GRAFÓW WIEDZY ===
+      let knowledgeFragments: KnowledgeGraph[];
+      const contentSession = await SessionService.getSession(sessionId!);
+      
+      if (contentSession?.progress.knowledgeFragments) {
+        knowledgeFragments = contentSession.progress.knowledgeFragments;
+        this.addLog('SUCCESS', `Wznowiono: Wczytano ${knowledgeFragments.length} fragmentów grafu z sesji`);
+      } else {
+        if (this.isCancelled()) throw new Error('Proces anulowany przez użytkownika');
+        if (this.isPaused()) {
+          await SessionService.updateSession(sessionId!, { status: 'paused' });
+          throw new Error('Proces zapauzowany przez użytkownika');
+        }
+        
+        knowledgeFragments = await this.extractKnowledgeGraphs(
+          scrapedContent,
+          config.project.centralEntity,
+          config.project.businessContext,
+          config.models.extractionModel,
+          config.project.language,
+          sessionId!
+        );
+        await SessionService.saveCheckpoint(sessionId!, 'fragments', knowledgeFragments);
+        this.addLog('SUCCESS', `Wygenerowano ${knowledgeFragments.length} fragmentów grafu wiedzy`);
+      }
 
-      // Step 5: Generate topical map
-      const topicalMap = await this.generateTopicalMap(consolidatedGraph, config);
-      this.addLog('SUCCESS', 'Wygenerowano finalną mapę tematyczną');
+      // === ETAP 4: KONSOLIDACJA GRAFU ===
+      let consolidatedGraph: KnowledgeGraph;
+      const fragmentsSession = await SessionService.getSession(sessionId!);
+      
+      if (fragmentsSession?.progress.consolidatedGraph) {
+        consolidatedGraph = fragmentsSession.progress.consolidatedGraph;
+        this.addLog('SUCCESS', `Wznowiono: Wczytano skonsolidowany graf z sesji`);
+      } else {
+        if (this.isCancelled()) throw new Error('Proces anulowany przez użytkownika');
+        if (this.isPaused()) {
+          await SessionService.updateSession(sessionId!, { status: 'paused' });
+          throw new Error('Proces zapauzowany przez użytkownika');
+        }
+        
+        consolidatedGraph = this.consolidateKnowledgeGraph(knowledgeFragments);
+        await SessionService.saveCheckpoint(sessionId!, 'consolidation', consolidatedGraph);
+        this.addLog('SUCCESS', `Skonsolidowano graf: ${consolidatedGraph.nodes.length} węzłów, ${consolidatedGraph.edges.length} relacji`);
+      }
 
+      // === ETAP 5: GENEROWANIE MAPY TEMATYCZNEJ ===
+      let topicalMap: string;
+      const consolidationSession = await SessionService.getSession(sessionId!);
+      
+      if (consolidationSession?.progress.topicalMap) {
+        topicalMap = consolidationSession.progress.topicalMap;
+        this.addLog('SUCCESS', `Wznowiono: Wczytano mapę tematyczną z sesji`);
+      } else {
+        if (this.isCancelled()) throw new Error('Proces anulowany przez użytkownika');
+        if (this.isPaused()) {
+          await SessionService.updateSession(sessionId!, { status: 'paused' });
+          throw new Error('Proces zapauzowany przez użytkownika');
+        }
+        
+        topicalMap = await this.generateTopicalMap(consolidatedGraph, config);
+        await SessionService.saveCheckpoint(sessionId!, 'synthesis', topicalMap);
+        this.addLog('SUCCESS', 'Wygenerowano finalną mapę tematyczną');
+      }
+
+      // Mark session as completed
       const executionTime = Date.now() - startTime;
+      await SessionService.updateSession(sessionId!, { 
+        status: 'completed', 
+        currentStep: 'completed',
+        metadata: { 
+          executionTime,
+          totalUrls: urls.length,
+          processedUrls: scrapedContent.length
+        }
+      });
+      
       this.addLog('SUCCESS', `Proces zakończony pomyślnie w czasie ${Math.round(executionTime / 1000)}s`);
 
       return {
@@ -119,12 +235,22 @@ export class ProcessingService {
         },
       };
     } catch (error) {
-      this.addLog('ERROR', `Błąd podczas przetwarzania: ${error instanceof Error ? error.message : 'Nieznany błąd'}`);
-      if (error instanceof Error && error.message === 'Process cancelled by user') {
-        this.addLog('INFO', 'Proces został anulowany przez użytkownika.');
-      } else {
-        throw error; // Rethrow other errors
+      if (sessionId) {
+        const errorMessage = error instanceof Error ? error.message : 'Nieznany błąd';
+        if (errorMessage.includes('zapauzowany')) {
+          this.addLog('WARNING', 'Proces zapauzowany przez użytkownika');
+        } else if (errorMessage.includes('anulowany')) {
+          await SessionService.updateSession(sessionId, { status: 'cancelled' });
+          this.addLog('WARNING', 'Proces anulowany przez użytkownika');
+        } else {
+          await SessionService.updateSession(sessionId, { 
+            status: 'error', 
+            error: errorMessage 
+          });
+          this.addLog('ERROR', `Błąd podczas przetwarzania: ${errorMessage}`);
+        }
       }
+      throw error;
     }
   }
 
@@ -171,8 +297,11 @@ export class ProcessingService {
 
       for (const query of queriesForThisRound) {
         if (this.isCancelled()) {
-          this.addLog('WARNING', 'Proces zatrzymany przez użytkownika');
-          throw new Error('Process cancelled by user');
+          throw new Error('Proces anulowany przez użytkownika');
+        }
+        
+        if (this.isPaused()) {
+          throw new Error('Proces zapauzowany przez użytkownika');
         }
         
         if (processedQueries.has(query)) {
@@ -255,7 +384,7 @@ export class ProcessingService {
     return uniqueUrls;
   }
 
-  private async scrapeContent(urls: string[]): Promise<Array<{ url: string; content: string }>> {
+  private async scrapeContent(urls: string[], sessionId?: string): Promise<Array<{ url: string; content: string }>> {
     this.addLog('INFO', `Rozpoczynanie pobierania treści z ${urls.length} stron...`);
     
     const results: Array<{ url: string; content: string }> = [];
@@ -263,8 +392,14 @@ export class ProcessingService {
     
     for (let i = 0; i < urls.length; i += batchSize) {
       if (this.isCancelled()) {
-        this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas pobierania treści');
-        throw new Error('Process cancelled by user');
+        throw new Error('Proces anulowany przez użytkownika');
+      }
+      
+      if (this.isPaused()) {
+        if (sessionId) {
+          await SessionService.saveCheckpoint(sessionId, 'content', results);
+        }
+        throw new Error('Proces zapauzowany przez użytkownika');
       }
       
       const batch = urls.slice(i, i + batchSize);
@@ -303,7 +438,8 @@ export class ProcessingService {
     centralEntity: string,
     businessContext: string,
     model: string,
-    language: string
+    language: string,
+    sessionId?: string
   ): Promise<KnowledgeGraph[]> {
     this.addLog('INFO', `Rozpoczynanie ekstrakcji grafów wiedzy z ${scrapedContent.length} stron...`);
     
@@ -311,8 +447,14 @@ export class ProcessingService {
     
     for (let i = 0; i < scrapedContent.length; i++) {
       if (this.isCancelled()) {
-        this.addLog('WARNING', 'Proces zatrzymany przez użytkownika podczas ekstrakcji grafów');
-        throw new Error('Process cancelled by user');
+        throw new Error('Proces anulowany przez użytkownika');
+      }
+      
+      if (this.isPaused()) {
+        if (sessionId) {
+          await SessionService.saveCheckpoint(sessionId, 'fragments', results);
+        }
+        throw new Error('Proces zapauzowany przez użytkownika');
       }
       
       const { url, content } = scrapedContent[i];
