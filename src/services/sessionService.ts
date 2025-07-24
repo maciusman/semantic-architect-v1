@@ -190,4 +190,4 @@ export class SessionService {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
-}</action>
+}
