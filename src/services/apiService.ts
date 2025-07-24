@@ -254,14 +254,16 @@ All extracted 'label' and 'type' values in the final JSON MUST be in the TARGET 
         content: `BUSINESS CONTEXT: ${businessContext}
 
 RULES AND EXCLUSIONS (CRITICAL!):
-- IGNORE AND DO NOT CREATE ENTITIES FOR: anything related to website cookies (e.g., _ga, PHPSESSID, CookieConsent), cookie categories (e.g., Necessary Cookies), privacy policies, user actions (e.g., login, register, cart), website features, navigation elements, or general IT service providers (e.g., Google, Amazon, Meta, Cookiebot, Edrone) unless they are directly a manufacturer or distributor in the medical/dental field.
-- FOCUS EXCLUSIVELY ON: entities directly relevant to the Business Context and the Central Entity "${centralEntity}". This includes:
-  - Medical and dental products, instruments, and materials.
-  - Brands and manufacturers in the dental industry (e.g., Poldent, VDW, Endostar).
-  - Medical procedures and dental specialties (e.g., Endodontics, Root Canal Treatment).
-  - Product categories and subcategories.
-  - Key features and properties of medical products.
-  - Scientific concepts and technologies relevant to the field.
+- IGNORE AND DO NOT CREATE ENTITIES FOR: anything related to website cookies, cookie categories, privacy policies, user actions (login, register, cart), website features, navigation elements, or general IT service providers (Google, Amazon, Meta, etc.) unless they are directly relevant to the BUSINESS CONTEXT.
+
+FOCUS AND PRIORITIZATION (CRITICAL!):
+- Your primary focus is to extract entities that are directly relevant to the provided BUSINESS CONTEXT and the Central Entity: "${centralEntity}".
+- The BUSINESS CONTEXT is your main guide for determining what is important. Based on it, you must dynamically identify and extract:
+  - Key products, services, and concepts related to the central topic.
+  - Brands, manufacturers, companies, and organizations active in this specific field.
+  - Important features, properties, and attributes of the products/services.
+  - Relevant categories, subcategories, and procedures.
+  - Any other type of entity that is critical for understanding this specific industry or topic.
 - MERGE DUPLICATES: If an entity appears with different types, create a single, consistent node for it.
 
 TASK:
