@@ -166,39 +166,44 @@ RULES:
       }
 
       const data = await response.json();
-      
+
       // Debug: log the response structure
       console.log('SerpData API Response:', JSON.stringify(data, null, 2));
-      
-      // Extract organic results
-      const organicResults = data.data?.data?.results?.organic_results || [];
-      
+
+      // SerpData API returns structure: { data: { results: { organic_results: [...], snippets: {...} } } }
+      // The outer wrapper is from the API response, so we access data.data.results
+      const apiResults = data.data?.results;
+      const organicResults = apiResults?.organic_results || [];
+
       // Extract additional queries from multiple sources
       const additionalQueries: string[] = [];
-      
-      // Source 1: People Also Ask questions
-      const paaQuestions = data.data?.data?.results?.snippets_data?.people_also_ask?.questions || 
-                          data.data?.data?.results?.people_also_ask?.map((item: any) => item.question) || [];
-      additionalQueries.push(...paaQuestions);
-      
-      // Source 2: Related Searches
-      const relatedSearches = data.data?.data?.results?.snippets_data?.related_searches?.queries || [];
+
+      // Source 1: People Also Ask questions - from snippets.people_also_ask.questions
+      const paaData = apiResults?.snippets?.people_also_ask;
+      if (paaData?.questions) {
+        const paaQuestions = paaData.questions.map((q: any) => q.text || q.question || '').filter(Boolean);
+        additionalQueries.push(...paaQuestions);
+      }
+
+      // Source 2: Related Searches - from snippets.related_searches.queries
+      const relatedSearches = apiResults?.snippets?.related_searches?.queries || [];
       additionalQueries.push(...relatedSearches);
-      
+
       console.log('Extracted organic results:', organicResults);
       console.log('Extracted additional queries from PAA and Related Searches:', additionalQueries);
-      
+
       // Map results with proper validation
+      // SerpData organic_results use: pos (not position), url (not link), title, domain
       const mappedResults = organicResults.slice(0, count).map((result: any) => ({
-        position: result.position || 0,
+        position: result.pos || result.position || 0,
         title: result.title || '',
-        link: result.link || result.url || '', // Try both 'link' and 'url' fields
+        link: result.url || result.link || '', // SerpData uses 'url' field
         snippet: result.snippet || result.description || '',
         additionalQueries: additionalQueries // Attach all additional queries to each result
       })).filter((result: SerpResult) => result.link && result.link.trim() !== ''); // Filter out empty URLs
-      
+
       console.log('Final mapped results:', mappedResults);
-      
+
       return mappedResults;
     } catch (error) {
       console.error('Error searching SERP:', error);
@@ -227,8 +232,6 @@ RULES:
     }
   }
 
-  async extractKnowledgeGraph(content: string, centralEntity: string, url: string, model: string, language: string): Promise<KnowledgeGraph> {
-  }
   async extractKnowledgeGraph(
     content: string, 
     centralEntity: string, 
