@@ -226,3 +226,7 @@ Używając tych narzędzi świadomie, masz pełną kontrolę nad całym procesem
     - Zacznij z parametrami: 2-3 główne zapytania, 5 URL-i na zapytanie, 1-2 eksploracje SERP
     - Gdy będziesz zadowolony z kierunku, zwiększ parametry dla pełnej analizy
     - Monitoruj logi w czasie rzeczywistym, aby zrozumieć jak przebiega proces</action>
+
+**🔗 Opis narzędzia na moim blogu**: https://aiposition.pl/blog/aplikacje/jak-przestac-zgadywac-w-seo-semantic-architect-moje-narzedzie-do-mapowania-semantyki-i-intencji
+
+**🔗 Skontaktuj się ze mną na LinkedIn**: https://www.linkedin.com/in/walczuk-maciej/
